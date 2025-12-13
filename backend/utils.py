@@ -16,6 +16,7 @@ class Config:
     notification_logs_collection="notification_logs"
     api_usage_collection="api_usage"
     ws_sessions_collection="ws_sessions"
+    ueba_events_collections="ueba_events"
     queuetype=os.getenv("QUEUE_TYPE")
     redishost=os.getenv("REDIS_HOST")
     redisport=int(os.getenv("REDIS_PORT"))
@@ -43,6 +44,7 @@ def get_mongo_client():
             "notification_logs": db[Config.notification_logs_collection],
             "api_usage": db[Config.api_usage_collection],
             "ws_sessions": db[Config.ws_sessions_collection],
+            "ueba_events":db[Config.ueba_events_collections]
         }
         
     

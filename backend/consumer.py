@@ -59,6 +59,7 @@ def start_telemetry_worker():
                     asyncio.run(push_to_websocket(vehicle_id,telemetry))
 
                     last_id=msg_id
+                    
         except Exception as e:
             worker_logs.insert_one({
                 "worker_name": "telemetry_worker",
