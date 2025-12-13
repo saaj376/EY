@@ -1,6 +1,21 @@
 import json 
 from datetime import datetime
 from utils import get_mongo_client, get_redis_client, Config
+import asyncio
+from websocket_server import active_connections
+
+async def push_to_websocket(vehicle_id: str,telemetry:dict):
+    connections=active_connections.get(vehicle_id,[])
+    for ws in list(connections):
+        try:
+            await ws.send_json({
+                "type":"TELEMETRY UPDATE",
+                "vehicle_id":vehicle_id,
+                "data": telemetry,
+                "timestamp": telemetry.get("timestamp")
+            })
+        except Exception:
+            connections.remove(ws)
 
 def start_telemetry_worker():
     mongo=get_mongo_client()
@@ -25,6 +40,7 @@ def start_telemetry_worker():
             for stream,msgs in messages:
                 for msg_id, msg_data in msgs:
                     telemetry=json.loads(msg_data['data'])
+                    vehicle_id=telemetry.get("vehicle_id")
                     
                     telemetry_collection.insert_one({
                         "vehicle_id": telemetry.get("vehicle_id"),
@@ -39,6 +55,8 @@ def start_telemetry_worker():
                         "message": f"Telemetry stored for {telemetry.get('vehicle_id')}",
                         "timestamp": datetime.utcnow()
                     })
+
+                    asyncio.run(push_to_websocket(vehicle_id,telemetry))
 
                     last_id=msg_id
         except Exception as e:
