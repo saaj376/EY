@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
 from app.connection import connect_to_mongo, close_mongo_connection
-
+from app.api.telemetry import router as telemetry_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -16,6 +16,7 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+app.include_router(telemetry_router)
 
 @app.get("/")
 async def ping():
