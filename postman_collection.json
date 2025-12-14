@@ -142,6 +142,120 @@
                         }
                     },
                     "response": []
+                },
+                {
+                    "name": "Get Bookings",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/customer/bookings",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "customer",
+                                "bookings"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Alerts",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/customer/alerts",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "customer",
+                                "alerts"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Book Service",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"vehicle_id\": \"657890123456789012345678\",\n    \"service_type\": \"General Service\",\n    \"booking_date\": \"2023-12-25T10:00:00\",\n    \"notes\": \"Please check brakes\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/customer/bookservice",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "customer",
+                                "bookservice"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Respond to Alert",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"alert_id\": \"657890123456789012345679\",\n    \"response\": \"I will bring it in tomorrow\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/customer/respond",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "customer",
+                                "respond"
+                            ]
+                        }
+                    },
+                    "response": []
                 }
             ]
         },
@@ -311,7 +425,7 @@
     "variable": [
         {
             "key": "base_url",
-            "value": "http://localhost:8001",
+            "value": "http://localhost:8000",
             "type": "string"
         },
         {

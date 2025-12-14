@@ -7,3 +7,10 @@ INFO:     Application startup complete.
 Connected to MongoDB
 INFO:     127.0.0.1:35342 - "GET /docs HTTP/1.1" 200 OK
 INFO:     127.0.0.1:35342 - "GET /openapi.json HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34420 - "POST /auth/register HTTP/1.1" 201 Created
+INFO:     127.0.0.1:56092 - "POST /auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53732 - "POST /customer/vehicles HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:55450 - "POST /customer/vehicles HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:35252 - "POST /customer/vehicles HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:51488 - "POST /customer/vehicles HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:58332 - "POST /customer/vehicles HTTP/1.1" 401 Unauthorized
