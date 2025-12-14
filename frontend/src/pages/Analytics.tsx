@@ -1,0 +1,239 @@
+import { useEffect, useState } from 'react';
+import { TrendingUp, AlertTriangle, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { UserRole } from '../types';
+import { analyticsApi } from '../services/api';
+import type { Analytics as AnalyticsType } from '../types';
+import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+
+interface AnalyticsProps {
+  role: UserRole;
+}
+
+const COLORS = ['#0ea5e9', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+
+const Analytics = ({ role }: AnalyticsProps) => {
+  const [analytics, setAnalytics] = useState<AnalyticsType | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      try {
+        const response = await analyticsApi.getAnalytics(role);
+        setAnalytics(response.data);
+      } catch (error) {
+        console.error('Error fetching analytics:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAnalytics();
+  }, [role]);
+
+  if (loading) {
+    return <div className="text-center py-12">Loading analytics...</div>;
+  }
+
+  if (!analytics) {
+    return <div className="text-center py-12">No analytics data available</div>;
+  }
+
+  const severityData = analytics.severity_distribution.map(item => ({
+    name: item._id,
+    value: item.count,
+  }));
+
+  const alertTrendData = analytics.alert_trend.map(item => ({
+    date: item._id,
+    alerts: item.count,
+  }));
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold text-gray-900">Analytics</h1>
+        <p className="text-gray-600 mt-1">Platform performance metrics and insights</p>
+      </div>
+
+      {/* Key Metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="card">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">Anomaly Rate</p>
+              <p className="text-3xl font-bold text-gray-900 mt-2">
+                {(analytics.anomaly_score_stats.anomaly_rate * 100).toFixed(1)}%
+              </p>
+            </div>
+            <AlertTriangle className="h-12 w-12 text-yellow-500" />
+          </div>
+        </div>
+
+        <div className="card">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">Alert Rate</p>
+              <p className="text-3xl font-bold text-gray-900 mt-2">
+                {(analytics.alert_rate * 100).toFixed(2)}%
+              </p>
+            </div>
+            <TrendingUp className="h-12 w-12 text-blue-500" />
+          </div>
+        </div>
+
+        <div className="card">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">Mean Detection Time</p>
+              <p className="text-3xl font-bold text-gray-900 mt-2">
+                {Math.round(analytics.mean_time_to_detect / 1000)}s
+              </p>
+            </div>
+            <Clock className="h-12 w-12 text-green-500" />
+          </div>
+        </div>
+
+        <div className="card">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">False Positive Rate</p>
+              <p className="text-3xl font-bold text-gray-900 mt-2">
+                {(analytics.false_positive_rate * 100).toFixed(1)}%
+              </p>
+            </div>
+            <XCircle className="h-12 w-12 text-red-500" />
+          </div>
+        </div>
+      </div>
+
+      {/* Anomaly Score Stats */}
+      <div className="card">
+        <h2 className="text-xl font-semibold text-gray-900 mb-4">Anomaly Score Statistics</h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div>
+            <p className="text-sm text-gray-600">Count</p>
+            <p className="text-2xl font-bold text-gray-900">{analytics.anomaly_score_stats.count}</p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-600">Mean Score</p>
+            <p className="text-2xl font-bold text-gray-900">
+              {analytics.anomaly_score_stats.mean_score.toFixed(2)}
+            </p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-600">Min Score</p>
+            <p className="text-2xl font-bold text-gray-900">
+              {analytics.anomaly_score_stats.min_score.toFixed(2)}
+            </p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-600">Max Score</p>
+            <p className="text-2xl font-bold text-gray-900">
+              {analytics.anomaly_score_stats.max_score.toFixed(2)}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Alert Trend */}
+        <div className="card">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Alert Trend (7 Days)</h2>
+          {alertTrendData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={alertTrendData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="date" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Line type="monotone" dataKey="alerts" stroke="#0ea5e9" name="Alerts" />
+              </LineChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="text-center py-12 text-gray-500">No trend data available</div>
+          )}
+        </div>
+
+        {/* Severity Distribution */}
+        <div className="card">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Severity Distribution</h2>
+          {severityData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={severityData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {severityData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="text-center py-12 text-gray-500">No severity data available</div>
+          )}
+        </div>
+      </div>
+
+      {/* RCA & CAPA Metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="card">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">RCA Closure Rate</h2>
+          <div className="space-y-4">
+            <div>
+              <div className="flex justify-between text-sm mb-2">
+                <span className="text-gray-600">Total RCA</span>
+                <span className="font-medium">{analytics.rca_closure_rate.total_rca}</span>
+              </div>
+              <div className="flex justify-between text-sm mb-2">
+                <span className="text-gray-600">Closed RCA</span>
+                <span className="font-medium text-green-600">{analytics.rca_closure_rate.closed_rca}</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2.5">
+                <div
+                  className="bg-green-600 h-2.5 rounded-full"
+                  style={{ width: `${analytics.rca_closure_rate.closure_rate * 100}%` }}
+                />
+              </div>
+              <p className="text-sm text-gray-600 mt-2">
+                Closure Rate: {(analytics.rca_closure_rate.closure_rate * 100).toFixed(1)}%
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="card">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Overdue CAPA</h2>
+          {analytics.overdue_capa.length > 0 ? (
+            <div className="space-y-2">
+              {analytics.overdue_capa.slice(0, 5).map((capa) => (
+                <div key={capa.capa_id} className="p-3 bg-red-50 rounded-lg border border-red-200">
+                  <p className="font-medium text-gray-900">CAPA #{capa.capa_id.slice(-8)}</p>
+                  <p className="text-sm text-gray-600">{capa.description}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-2" />
+              <p>No overdue CAPA items</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Analytics;
+
