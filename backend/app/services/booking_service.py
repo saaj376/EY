@@ -9,7 +9,7 @@ VALID_TRANSITIONS = {
 }
 
 
-def update_booking_status(booking_id: str, new_status: str):
+def update_booking_status(booking_id: str, new_status: str , remarks : str | None = None):
     db = get_db()
     bookings = db["bookings"]
 
@@ -24,9 +24,17 @@ def update_booking_status(booking_id: str, new_status: str):
             f"Invalid transition: {current_status} -> {new_status}"
         )
 
+    update_fields = {
+        "status": new_status,
+        "updated_at": datetime.now(timezone.utc),
+    }
+
+    if remarks:
+        update_fields["remarks"] = remarks
+
     bookings.update_one(
         {"id": booking_id},
-        {"$set": {"status": new_status, "updated_at": datetime.now(timezone.utc)}}
+        {"$set": update_fields}
     )
 
     # If service completed -> resolve alert

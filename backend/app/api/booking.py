@@ -21,25 +21,3 @@ def confirm_booking(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.patch("/{booking_id}/start")
-def start_service(
-    booking_id: str,
-    # user=Depends(require_role(Role.SERVICE_CENTRE)),
-):
-    try:
-        update_booking_status(booking_id, "IN_PROGRESS")
-        return {"status": "IN_PROGRESS"}
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-
-@router.patch("/{booking_id}/complete")
-def complete_service(
-    booking_id: str,
-    # user=Depends(require_role(Role.SERVICE_CENTRE)),
-):
-    try:
-        update_booking_status(booking_id, "COMPLETED")
-        return {"status": "COMPLETED"}
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
