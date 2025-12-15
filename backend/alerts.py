@@ -3,9 +3,12 @@ from db import db
 from datetime import datetime
 from notifications import notify_user, notify_service_centre
 from db import db
+from voice_agent import trigger_voice_call
 
 alerts_col = db.alerts
 diagnosis_col = db.diagnosis
+
+
 
 def create_alert(vehicle_id, alert_type, value, severity):
     alert = {
@@ -26,6 +29,12 @@ def create_alert(vehicle_id, alert_type, value, severity):
             user_id=vehicle["owner_user_id"],
             message=f"Alert detected: {alert_type} (Severity: {severity})"
         )
+    if severity == "HIGH" :
+        vehicle = db.vehicles.find_one({"_id": vehicle_id})
+        if vehicle:
+            user = db.users.find_one({"_id": vehicle["owner_user_id"]})
+            if user and user.get("phone"):
+                trigger_voice_call(user["phone"])
 
     return alert_id
 

@@ -1,0 +1,77 @@
+{
+    "type": "Settings",
+    "audio": {
+        "input": {
+            "encoding": "mulaw",
+            "sample_rate": 8000
+        },
+        "output": {
+            "encoding": "mulaw",
+            "sample_rate": 8000,
+            "container": "none"
+        }
+    },
+    "agent": {
+        "language": "en",
+        "listen": {
+            "provider": {
+                "type": "deepgram",
+                "model": "nova-3",
+                "keyterms": ["hello", "goodbye"]
+            }
+        },
+        "think": {
+            "provider": {
+                "type": "open_ai",
+                "model": "gpt-4o-mini",
+                "temperature": 0.7
+            },
+            "prompt": "You are an AI voice assistant for an automotive service platform. Your role is to help vehicle owners understand their vehicle’s health, explain alerts and diagnoses in simple terms, and guide them toward the next best action. You must rely only on information provided by the system and available tools. Do not guess or invent details. For critical vehicle issues, communicate urgency clearly and prioritize safety. For non-critical issues, reassure the user and provide clear options. Ask for confirmation before booking or rescheduling services. If you are unsure or the user is distressed, escalate politely to a human support agent. Keep responses concise, empathetic, and professional.",
+            "functions": [
+                {
+                    "name": "get_user_alerts",
+                    "description": "Fetch recent vehicle alerts for the current caller so you can explain what is going on with their vehicle. The backend will infer the user from the caller's phone number; you do NOT need to ask for an internal user ID.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "user_id": {
+                                "type": "string",
+                                "description": "Optional. Internal platform user ID. Usually omitted; the backend will infer it from the caller's phone number."
+                            },
+                            "limit": {
+                                "type": "integer",
+                                "description": "Maximum number of recent alerts to fetch.",
+                                "default": 5
+                            }
+                        }
+                    }
+                },
+                {
+                    "name": "get_user_diagnosis",
+                    "description": "Fetch recent diagnosis entries for the current caller’s alerts so you can explain probable cause and recommendations. The backend will infer the user from the caller's phone number; you do NOT need to ask for an internal user ID.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "user_id": {
+                                "type": "string",
+                                "description": "Optional. Internal platform user ID. Usually omitted; the backend will infer it from the caller's phone number."
+                            },
+                            "limit": {
+                                "type": "integer",
+                                "description": "Maximum number of recent diagnosis items to fetch.",
+                                "default": 5
+                            }
+                        }
+                    }
+                }
+            ]
+        },
+        "speak": {
+            "provider": {
+                "type": "deepgram",
+                "model": "aura-2-thalia-en"
+            }
+        },
+        "greeting": "Hello! How can I help you today?"
+    }
+}

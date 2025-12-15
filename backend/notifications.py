@@ -6,39 +6,58 @@ from twilio_client import send_sms
 # Collection
 notification_col = db.notification_logs
 
+
 def _insert_notification(payload: dict):
     payload["timestamp"] = datetime.utcnow()
-    payload["status"] = "QUEUED"   # QUEUED | SENT | FAILED
+    payload["status"] = "QUEUED"  # QUEUED | SENT | FAILED
     notification_col.insert_one(payload)
+
 
 def notify_user(
     user_id: str,
     message: str,
     category: str = "INFO",
-    channel: str = "SMS"
+    channel: str = "SMS",
 ):
     # Fetch user's phone number
     user = db.users.find_one({"_id": user_id})
     phone = user.get("phone") if user else None
+
+    print(
+        f"[notify_user] user_id={user_id}, channel={channel}, "
+        f"has_user={bool(user)}, has_phone={bool(phone)}"
+    )
 
     notification = {
         "user_id": user_id,
         "channel": channel,
         "category": category,
         "message": message,
-        "status": "QUEUED"
+        "status": "QUEUED",
     }
 
     try:
         if channel == "SMS" and phone:
+            print(f"[notify_user] Attempting SMS to {phone}")
             send_sms(phone, message)
             notification["status"] = "SENT"
+            print("[notify_user] SMS sent successfully")
         else:
             notification["status"] = "QUEUED"
+            if not user:
+                print(f"[notify_user] No user found for user_id={user_id}")
+            elif not phone:
+                print(f"[notify_user] No phone number for user_id={user_id}")
+            else:
+                print(
+                    f"[notify_user] Channel '{channel}' is not SMS, "
+                    "skipping direct Twilio send"
+                )
 
     except Exception as e:
         notification["status"] = "FAILED"
         notification["failure_reason"] = str(e)
+        print(f"[notify_user] Failed to send notification: {e}")
 
     notification["timestamp"] = datetime.utcnow()
     notification_col.insert_one(notification)
