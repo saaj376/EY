@@ -11,26 +11,24 @@ import {
   BarChart3,
   LogOut,
   User,
-  PanelLeftClose, 
+  PanelLeftClose,
   PanelLeftOpen, // 👈 New icon for opening the sidebar
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { UserRole } from '../types';
-import NotificationsPanel from './NotificationsPanel';
+
 
 interface LayoutProps {
   children: ReactNode;
 }
 
-// Define widths
-const COLLAPSED_WIDTH = 64; // w-16
-const EXPANDED_WIDTH = 256; // w-64
+// Define widths (for reference)
 
 const Layout = ({ children }: LayoutProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { role, userId, logout } = useAuth();
-  
+
   // -------------------- COLLAPSE/EXPAND LOGIC --------------------
   const [isExpanded, setIsExpanded] = useState(true);
 
@@ -69,7 +67,7 @@ const Layout = ({ children }: LayoutProps) => {
   ];
 
   const visibleNavItems = navItems.filter(item => item.roles.includes(currentRole));
-  
+
   // Tailwind class based on state
   const sidebarWidthClass = isExpanded ? 'w-64' : 'w-20';
   const sidebarTransitionClass = 'transition-all duration-300 ease-in-out';
@@ -135,16 +133,15 @@ const Layout = ({ children }: LayoutProps) => {
                 <Link
                   key={item.path}
                   to={item.path}
-                  className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors group ${
-                    isActive
-                      ? 'bg-gray-800 text-blue-400 font-medium'
-                      : 'text-gray-400 hover:bg-gray-800/60'
-                  }`}
+                  className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors group ${isActive
+                    ? 'bg-gray-800 text-blue-400 font-medium'
+                    : 'text-gray-400 hover:bg-gray-800/60'
+                    }`}
                   title={!isExpanded ? item.label : undefined} // Add tooltip when collapsed
                 >
                   {/* Icon is always visible */}
                   <Icon className="h-5 w-5 shrink-0" />
-                  
+
                   {/* Text hides/shows with animation */}
                   <span className={`${navItemTextClass} ${sidebarTransitionClass} whitespace-nowrap`}>
                     {item.label}
@@ -153,7 +150,7 @@ const Layout = ({ children }: LayoutProps) => {
               );
             })}
           </nav>
-          
+
           {/* Collapse/Expand Button */}
           <button
             onClick={toggleSidebar}
@@ -162,7 +159,7 @@ const Layout = ({ children }: LayoutProps) => {
           >
             {isExpanded ? <PanelLeftClose size={20} /> : <PanelLeftOpen size={20} />}
           </button>
-          
+
         </aside>
 
         {/* Main Content */}

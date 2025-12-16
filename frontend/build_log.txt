@@ -1,0 +1,20 @@
+
+> vehicle-intelligence-frontend@1.0.0 build
+> tsc && vite build
+
+src/components/dashboard/ServiceDashboard.tsx(4,5): error TS6133: 'ClipboardCheck' is declared but its value is never read.
+src/components/dashboard/ServiceDashboard.tsx(9,5): error TS6133: 'Clock' is declared but its value is never read.
+src/components/Layout.tsx(19,1): error TS6133: 'NotificationsPanel' is declared but its value is never read.
+src/components/Layout.tsx(26,7): error TS6133: 'COLLAPSED_WIDTH' is declared but its value is never read.
+src/components/Layout.tsx(27,7): error TS6133: 'EXPANDED_WIDTH' is declared but its value is never read.
+src/pages/Analytics.tsx(6,10): error TS6133: 'BarChart' is declared but its value is never read.
+src/pages/Analytics.tsx(6,20): error TS6133: 'Bar' is declared but its value is never read.
+src/pages/Analytics.tsx(175,38): error TS6133: 'entry' is declared but its value is never read.
+src/pages/CAPA.tsx(13,23): error TS6133: 'serviceCentreId' is declared but its value is never read.
+src/pages/Dashboard.tsx(15,1): error TS6133: 'CustomerDashboard' is declared but its value is never read.
+src/pages/Dashboard.tsx(17,1): error TS6133: 'OEMDashboard' is declared but its value is never read.
+src/pages/Login.tsx(165,50): error TS2339: Property 'serviceCentrePlaceholder' does not exist on type '{ label: string; icon: LucideIcon; description: string; placeholder: string; } | { label: string; icon: LucideIcon; description: string; placeholder: string; serviceCentrePlaceholder: string; } | { ...; } | { ...; }'.
+  Property 'serviceCentrePlaceholder' does not exist on type '{ label: string; icon: LucideIcon; description: string; placeholder: string; }'.
+src/pages/RCA.tsx(2,20): error TS6133: 'AlertTriangle' is declared but its value is never read.
+src/pages/RCA.tsx(2,35): error TS6133: 'Search' is declared but its value is never read.
+src/pages/RCA.tsx(19,16): error TS6133: 'setRcas' is declared but its value is never read.

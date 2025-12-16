@@ -20,12 +20,11 @@ const AppRoutes = () => {
   // Ensure we have valid values
   const currentRole = role || UserRole.CUSTOMER;
   const currentUserId = userId || 'user123';
-  const currentServiceCentreId = serviceCentreId || 'service001';
+  const currentServiceCentreId = serviceCentreId || '694036caf68d90b5620e1860';
 
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
-      <Route path="/signup" element={<Signup />} />
       <Route
         path="/*"
         element={

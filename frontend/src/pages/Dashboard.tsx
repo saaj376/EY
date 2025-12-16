@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { 
-  AlertTriangle, 
-  Car, 
-  Activity, 
-  TrendingUp, 
+import {
+  AlertTriangle,
+  Car,
+  Activity,
+  TrendingUp,
   Clock,
   XCircle,
   Wrench
@@ -12,9 +12,7 @@ import {
 import { UserRole } from '../types';
 import type { Vehicle, Alert, Booking } from '../types';
 import { userApi, serviceApi } from '../services/api';
-import CustomerDashboard from '../components/dashboard/CustomerDashboard';
 import ServiceDashboard from '../components/dashboard/ServiceDashboard';
-import OEMDashboard from '../components/dashboard/OEMDashboard';
 
 interface DashboardProps {
   role: UserRole;
@@ -141,14 +139,14 @@ const Dashboard = ({ role, userId, serviceCentreId }: DashboardProps) => {
         <div className="card">
           <div className="flex items-center justify-between">
             <div>
-                <p className="text-xs font-medium uppercase tracking-[0.18em] text-gray-400">
-                  Scheduled
-                </p>
-                <p className="mt-3 text-4xl font-semibold text-gray-50" style={{ fontFamily: '"Space Mono", monospace' }}>
-                  {upcomingBookings.length}
-                </p>
-                <p className="mt-1 text-xs text-gray-400">Maintenance bookings</p>
-              </div>
+              <p className="text-xs font-medium uppercase tracking-[0.18em] text-gray-400">
+                Scheduled
+              </p>
+              <p className="mt-3 text-4xl font-semibold text-gray-50" style={{ fontFamily: '"Space Mono", monospace' }}>
+                {upcomingBookings.length}
+              </p>
+              <p className="mt-1 text-xs text-gray-400">Maintenance bookings</p>
+            </div>
             <div className="rounded-xl bg-gray-800/80 p-3">
               <Clock className="h-7 w-7 text-sky-400" />
             </div>
@@ -180,13 +178,12 @@ const Dashboard = ({ role, userId, serviceCentreId }: DashboardProps) => {
               >
                 <div className="flex items-center gap-3">
                   <span
-                    className={`h-2 w-2 rounded-full ${
-                      alert.severity === 'HIGH'
+                    className={`h-2 w-2 rounded-full ${alert.severity === 'HIGH'
                         ? 'bg-red-500'
                         : alert.severity === 'MEDIUM'
-                        ? 'bg-amber-400'
-                        : 'bg-sky-400'
-                    }`}
+                          ? 'bg-amber-400'
+                          : 'bg-sky-400'
+                      }`}
                   />
                   <div>
                     <p className="text-sm font-medium text-gray-100">
@@ -199,13 +196,12 @@ const Dashboard = ({ role, userId, serviceCentreId }: DashboardProps) => {
                   </div>
                 </div>
                 <span
-                  className={`badge ${
-                    alert.severity === 'HIGH'
+                  className={`badge ${alert.severity === 'HIGH'
                       ? 'bg-red-500/10 text-red-300'
                       : alert.severity === 'MEDIUM'
-                      ? 'bg-amber-500/10 text-amber-300'
-                      : 'bg-sky-500/10 text-sky-300'
-                  }`}
+                        ? 'bg-amber-500/10 text-amber-300'
+                        : 'bg-sky-500/10 text-sky-300'
+                    }`}
                 >
                   {alert.severity}
                 </span>

@@ -3,7 +3,7 @@ import { TrendingUp, AlertTriangle, Clock, CheckCircle, XCircle } from 'lucide-r
 import { UserRole } from '../types';
 import { analyticsApi } from '../services/api';
 import type { Analytics as AnalyticsType } from '../types';
-import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
 interface AnalyticsProps {
   role: UserRole;
@@ -172,7 +172,7 @@ const Analytics = ({ role }: AnalyticsProps) => {
                   fill="#8884d8"
                   dataKey="value"
                 >
-                  {severityData.map((entry, index) => (
+                  {severityData.map((_, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>

@@ -1,0 +1,10 @@
+
+> vehicle-intelligence-frontend@1.0.0 build
+> tsc && vite build
+
+src/pages/ServiceBooking.tsx(559,90): error TS2339: Property 'speed' does not exist on type 'Telemetry'.
+src/pages/ServiceBooking.tsx(567,92): error TS2551: Property 'engine_temp' does not exist on type 'Telemetry'. Did you mean 'engine_temp_c'?
+src/pages/ServiceBooking.tsx(571,93): error TS2339: Property 'fuel_level' does not exist on type 'Telemetry'.
+src/pages/ServiceBooking.tsx(575,92): error TS2551: Property 'battery_voltage' does not exist on type 'Telemetry'. Did you mean 'battery_voltage_v'?
+src/pages/ServiceBooking.tsx(692,68): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FileText, AlertTriangle, Search, Plus } from 'lucide-react';
+import { FileText, Plus } from 'lucide-react';
 import { UserRole } from '../types';
 import { rcaApi } from '../services/api';
 import { format } from 'date-fns';
@@ -16,7 +16,7 @@ const RCA = ({ role }: RCAProps) => {
     root_cause: '',
     analysis_method: '5_WHYS',
   });
-  const [rcas, setRcas] = useState<any[]>([]); // Would fetch from API
+  const [rcas, _setRcas] = useState<any[]>([]); // Would fetch from API
 
   const handleCreateRCA = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -149,9 +149,8 @@ const RCA = ({ role }: RCAProps) => {
                     <div className="flex items-center space-x-3 mb-2">
                       <FileText className="h-5 w-5 text-blue-400" />
                       <h3 className="font-semibold text-gray-50">RCA #{rca.rca_id.slice(-8)}</h3>
-                      <span className={`badge border ${
-                        rca.status === 'CLOSED' ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20' : 'bg-amber-500/10 text-amber-300 border-amber-500/20'
-                      }`}>
+                      <span className={`badge border ${rca.status === 'CLOSED' ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20' : 'bg-amber-500/10 text-amber-300 border-amber-500/20'
+                        }`}>
                         {rca.status}
                       </span>
                     </div>

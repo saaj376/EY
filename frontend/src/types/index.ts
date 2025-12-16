@@ -1,3 +1,4 @@
+// Role Definitions
 export enum UserRole {
   CUSTOMER = "CUSTOMER",
   SERVICE_CENTER = "SERVICE_CENTER",
@@ -5,6 +6,7 @@ export enum UserRole {
   OEM_ANALYST = "OEM_ANALYST",
 }
 
+// Basic Entities
 export interface Vehicle {
   vin: string;
   owner_user_id: string;
@@ -15,6 +17,17 @@ export interface Vehicle {
   last_seen_at: string;
 }
 
+export interface WorkerLog {
+  _id?: string;
+  job_card_id: string;
+  worker_name: string;
+  action: string;
+  notes: string;
+  timestamp: string;
+  metadata?: any;
+}
+
+// Telemetry & Alerts
 export interface Telemetry {
   vehicle_id: string;
   timestamp: string;
@@ -34,6 +47,8 @@ export interface Alert {
   vehicle_id: string;
   timestamp: string;
   alert_type: string;
+  type?: string; // Frontend alias
+  message?: string; // Description
   value: number;
   severity: "LOW" | "MEDIUM" | "HIGH";
   resolved: boolean;
@@ -48,6 +63,7 @@ export interface Diagnosis {
   created_at: string;
 }
 
+// Process Management
 export interface RCA {
   rca_id: string;
   alert_id: string;
@@ -69,6 +85,7 @@ export interface CAPA {
   created_at: string;
 }
 
+// Service Workflow
 export interface Booking {
   booking_id: string;
   vehicle_id: string;
@@ -78,24 +95,111 @@ export interface Booking {
   slot_end: string;
   status: string;
   created_at: string;
+
+  // Enhanced Fields
+  customer_name?: string;
+  customer_phone?: string;
+  customer_email?: string;
+  vehicle_make?: string;
+  vehicle_model?: string;
+  vehicle_year?: number;
+  status_timeline?: Array<{
+    status: string;
+    timestamp: string;
+    notes: string;
+  }>;
 }
 
 export interface JobCard {
   job_card_id: string;
   booking_id: string;
-  notes: string;
+  vehicle_id?: string;
+  service_centre_id?: string;
+
+  // Status & Assignment
   status: string;
+  assigned_technician?: string;
+  technician_notes?: string;
+
+  // Work Details
+  parts_used?: Array<{
+    name: string;
+    quantity: number;
+    cost: number;
+  }>;
+  labour_hours?: number;
+
+  // Timeline/Logs
   created_at: string;
+  updated_at?: string;
+  work_timeline?: Array<{
+    status: string;
+    timestamp: string;
+    technician?: string;
+    notes: string;
+  }>;
+  worker_logs?: WorkerLog[];
+
+  // Legacy
+  notes: string;
 }
 
 export interface Invoice {
   invoice_id: string;
+  invoice_number?: string;
+
+  // Relations
   job_card_id: string;
-  parts: Array<{ name: string; cost: number }>;
+  booking_id?: string;
+  vehicle_id?: string;
+  service_centre_id?: string;
+  customer_id?: string;
+
+  // Customer Details (Snapshot)
+  customer_name?: string;
+  customer_email?: string;
+  customer_phone?: string;
+
+  // Line Items
+  parts: Array<{
+    name: string;
+    quantity?: number;
+    cost: number
+  }>;
+  parts_total?: number;
+
+  // Labour
+  labour_hours?: number;
+  labour_rate_per_hour?: number;
   labour_cost: number;
-  tax: number;
-  total: number;
+
+  // Totals
+  subtotal?: number;
+  tax_percentage?: number;
+  tax_amount?: number;
+  tax: number; // Legacy or alternative name
+
+  total_amount?: number; // New preferred field
+  total: number; // Legacy field
+
+  // Status & Payment
+  status?: string;
+  payment_status?: string;
+  due_date?: string;
+  paid_at?: string;
+  payment_method?: string;
+  transaction_id?: string;
+
   created_at: string;
+}
+
+// Dashboard & Analytics
+export interface DashboardStats {
+  todays_bookings: number;
+  active_jobs: number;
+  pending_invoices: number;
+  monthly_revenue: number;
+  service_centre_id: string;
 }
 
 export interface Analytics {
