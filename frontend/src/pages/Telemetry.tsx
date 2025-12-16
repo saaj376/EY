@@ -1,5 +1,4 @@
-
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import {
   Activity,
@@ -7,13 +6,8 @@ import {
   Thermometer,
   Battery,
   Fuel,
-  Play,
-  Square,
-  AlertCircle
+  MapPin,
 } from "lucide-react";
-import { UserRole } from "../types";
-import { userApi } from "../services/api";
-import type { Telemetry, Vehicle } from "../types";
 import {
   LineChart,
   Line,
@@ -26,50 +20,43 @@ import {
 } from "recharts";
 import { format } from "date-fns";
 
-interface TelemetryProps {
+import { UserRole } from "../types";
+import { telemetryApi, userApi } from "../services/api";
+import type { Telemetry, Vehicle } from "../types";
+
+const MAX_POINTS = 30;
+
+interface Props {
   role: UserRole;
   userId: string;
 }
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
-
-const Telemetry = ({ role, userId }: TelemetryProps) => {
+export default function TelemetryPage({ role, userId }: Props) {
   const { vehicleId } = useParams<{ vehicleId?: string }>();
+
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
-  const [selectedVehicle, setSelectedVehicle] = useState<string>(
-    vehicleId || ""
-  );
-  const [currentData, setCurrentData] = useState<Telemetry | null>(null);
+  const [selectedVehicle, setSelectedVehicle] = useState(vehicleId || "");
+  const [liveTelemetry, setLiveTelemetry] = useState<Telemetry | null>(null);
   const [history, setHistory] = useState<Telemetry[]>([]);
   const [connected, setConnected] = useState(false);
   const [simulatorRunning, setSimulatorRunning] = useState(false);
   const [simulatorLoading, setSimulatorLoading] = useState(false);
 
-  const wsRef = useRef<WebSocket | null>(null);
+  const isAdvancedUser = role !== UserRole.CUSTOMER;
 
-  // 1. Fetch available vehicles
+  // -------------------- Vehicles --------------------
   useEffect(() => {
-    const fetchVehicles = async () => {
-      if (role === UserRole.CUSTOMER) {
-        try {
-          const response = await userApi.getVehicles(userId, role);
-          setVehicles(response.data);
-          if (response.data.length > 0 && !selectedVehicle) {
-            setSelectedVehicle(response.data[0].vin);
-          }
-        } catch (error) {
-          console.error("Error fetching vehicles:", error);
-        }
-      } else if (!selectedVehicle) {
-        // Default for other roles if not passed in URL
-        setSelectedVehicle("DEMO-VEHICLE-001");
+    if (role !== UserRole.CUSTOMER) return;
+
+    userApi.getVehicles(userId, role).then((res) => {
+      setVehicles(res.data);
+      if (!selectedVehicle && res.data.length > 0) {
+        setSelectedVehicle(res.data[0].vin);
       }
-    };
+    });
+  }, [role, userId]);
 
-    fetchVehicles();
-  }, [role, userId, selectedVehicle]);
-
-  // 2. WebSocket Connection
+  // -------------------- Telemetry --------------------
   useEffect(() => {
     if (!selectedVehicle) return;
 
@@ -97,62 +84,24 @@ const Telemetry = ({ role, userId }: TelemetryProps) => {
 
     ws.onmessage = (event) => {
       try {
-        const data: Telemetry = JSON.parse(event.data);
-        setCurrentData(data);
-        setHistory(prev => {
-          const newHistory = [data, ...prev].slice(0, 50); // Keep last 50 points
-          return newHistory;
-        });
-      } catch (e) {
-        console.error("Error parsing WS message", e);
+        const [liveRes, historyRes] = await Promise.all([
+          telemetryApi.getLive(selectedVehicle, role).catch(() => null),
+          telemetryApi.getHistory(selectedVehicle, MAX_POINTS, role),
+        ]);
+
+        if (liveRes) setLiveTelemetry(liveRes.data);
+        if (historyRes?.data) setHistory(historyRes.data);
+      } finally {
+        setLoading(false);
       }
     };
 
-    ws.onclose = () => {
-      console.log("WS Disconnected");
-      setConnected(false);
-    };
+    fetchTelemetry();
+    const interval = setInterval(fetchTelemetry, 3000);
+    return () => clearInterval(interval);
+  }, [selectedVehicle, role]);
 
-    ws.onerror = (err) => {
-      console.error("WS Error", err);
-
-    };
-
-    return () => {
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.close();
-      }
-    };
-  }, [selectedVehicle, userId]);
-
-  const handleToggleSimulator = async () => {
-    setSimulatorLoading(true);
-    try {
-      const vehicleId = selectedVehicle || "DEMO-VEHICLE-001";
-      const encodedVehicleId = encodeURIComponent(vehicleId);
-
-      const headers = {
-        "Content-Type": "application/json",
-        "X-Role": role
-      };
-
-      if (simulatorRunning) {
-        const response = await fetch(`${API_BASE_URL}/simulator/stop/${encodedVehicleId}`, { method: "POST", headers });
-        if (response.ok) {
-          setSimulatorRunning(false);
-        }
-      } else {
-        const response = await fetch(`${API_BASE_URL}/simulator/start/${encodedVehicleId}`, { method: "POST", headers });
-        if (response.ok) {
-          setSimulatorRunning(true);
-        }
-      }
-    } catch (error) {
-      console.error("Error toggling simulator:", error);
-    } finally {
-      setSimulatorLoading(false);
-    }
-  };
+  const current = liveTelemetry || history[0];
 
   const chartData = history
     .slice()
@@ -162,199 +111,132 @@ const Telemetry = ({ role, userId }: TelemetryProps) => {
       speed: t.speed_kmph,
       rpm: t.rpm,
       engineTemp: t.engine_temp_c,
-      coolantTemp: t.coolant_temp_c,
     }));
 
+  if (!current && loading) {
+    return <div className="py-12 text-center text-gray-400">Loading telemetry…</div>;
+  }
+
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center">
-            Live Telemetry
-            {connected ? (
-              <span className="ml-3 px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full flex items-center">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse mr-2"></div>
-                Connected
-              </span>
-            ) : (
-              <span className="ml-3 px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full flex items-center">
-                <AlertCircle className="w-3 h-3 mr-1" />
-                Disconnected
-              </span>
-            )}
-          </h1>
-          <p className="text-gray-600 mt-1">Real-time vehicle data streaming via WebSocket</p>
+          <h1 className="text-3xl font-semibold text-gray-50">Telemetry</h1>
+          <p className="mt-1 text-sm text-gray-400">Real-time vehicle monitoring</p>
         </div>
 
-        <div className="flex items-center space-x-4">
-          {role === UserRole.CUSTOMER && vehicles.length > 0 && (
-            <select
-              value={selectedVehicle}
-              onChange={(e) => setSelectedVehicle(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-            >
-              {vehicles.map((v) => (
-                <option key={v.vin} value={v.vin}>
-                  {v.make} {v.model} ({v.vin})
-                </option>
-              ))}
-            </select>
-          )}
-
-          <button
-            onClick={handleToggleSimulator}
-            disabled={simulatorLoading}
-            className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-colors ${simulatorRunning
-              ? "bg-red-600 hover:bg-red-700 text-white"
-              : "bg-green-600 hover:bg-green-700 text-white"
-              } disabled:opacity-50 shadow-sm`}
+        {role === UserRole.CUSTOMER && vehicles.length > 0 && (
+          <select
+            className="border border-gray-700 rounded-lg px-4 py-2 bg-gray-900 text-gray-100"
+            value={selectedVehicle}
+            onChange={(e) => setSelectedVehicle(e.target.value)}
           >
-            {simulatorRunning ? (
-              <>
-                <Square className="h-4 w-4" />
-                <span>Stop Engine</span>
-              </>
-            ) : (
-              <>
-                <Play className="h-4 w-4" />
-                <span>Start Engine</span>
-              </>
-            )}
-          </button>
-        </div>
+            {vehicles.map((v) => (
+              <option key={v.vin} value={v.vin}>
+                {v.make} {v.model} ({v.vin})
+              </option>
+            ))}
+          </select>
+        )}
       </div>
 
-      {!currentData ? (
-        <div className="card text-center py-16 bg-gray-50 border-dashed border-2 border-gray-200">
-          <Activity className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">
-            No live signal
-          </h3>
-          <p className="text-gray-600 max-w-sm mx-auto">
-            Vehicle is currently offline or simulator is stopped. Click
-            <span className="font-bold text-green-600 mx-1">Start Engine</span>
-            to begin the demo.
-          </p>
+      {!current ? (
+        <div className="text-center py-12 text-gray-400">
+          No telemetry data available
         </div>
       ) : (
         <>
-          {/* Main Gauges */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="card bg-gradient-to-br from-white to-blue-50 border-blue-100">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-gray-600">Speed</span>
-                <Gauge className="h-5 w-5 text-blue-600" />
-              </div>
-              <p className="text-4xl font-bold text-gray-900 tracking-tight">
-                {currentData.speed_kmph}
-              </p>
-              <p className="text-xs text-blue-600 mt-1 font-medium uppercase tracking-wide">km/h</p>
-            </div>
-
-            <div className="card bg-gradient-to-br from-white to-emerald-50 border-emerald-100">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-gray-600">RPM</span>
-                <Activity className="h-5 w-5 text-emerald-600" />
-              </div>
-              <p className="text-4xl font-bold text-gray-900 tracking-tight">
-                {currentData.rpm}
-              </p>
-              <p className="text-xs text-emerald-600 mt-1 font-medium uppercase tracking-wide">rev/min</p>
-            </div>
-
-            <div className="card bg-gradient-to-br from-white to-red-50 border-red-100">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-gray-600">Engine Temp</span>
-                <Thermometer className="h-5 w-5 text-red-600" />
-              </div>
-              <p className="text-4xl font-bold text-gray-900 tracking-tight">
-                {currentData.engine_temp_c}°
-              </p>
-              <p className="text-xs text-red-600 mt-1 font-medium uppercase tracking-wide">Celsius</p>
-            </div>
-
-            <div className="card bg-gradient-to-br from-white to-amber-50 border-amber-100">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-gray-600">Fuel Level</span>
-                <Fuel className="h-5 w-5 text-amber-600" />
-              </div>
-              <p className="text-4xl font-bold text-gray-900 tracking-tight">
-                {currentData.fuel_level_percent}%
-              </p>
-              <p className="text-xs text-amber-600 mt-1 font-medium uppercase tracking-wide">Tank</p>
-            </div>
+          {/* Live Metrics */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <Metric title="Speed" value={`${current.speed_kmph}`} unit="km/h" icon={<Gauge />} />
+            <Metric title="RPM" value={`${current.rpm}`} unit="rpm" icon={<Activity />} />
+            <Metric
+              title="Engine Temp"
+              value={`${current.engine_temp_c}`}
+              unit="°C"
+              icon={<Thermometer />}
+              danger={current.engine_temp_c > 95}
+            />
+            <Metric title="Fuel" value={`${current.fuel_level_percent}`} unit="%" icon={<Fuel />} />
           </div>
 
-          {/* Secondary Stats & Location */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="card space-y-6">
-              <h3 className="font-semibold text-gray-900 border-b pb-2">Vehicle Health</h3>
+          {/* Location */}
+          <div className="card">
+            <h3 className="font-medium mb-3 flex items-center gap-2 text-gray-50">
+              <MapPin size={18} /> Location
+            </h3>
+            <p className="text-sm text-gray-400">
+              {current.latitude}, {current.longitude} · Engine {current.engine_status}
+            </p>
+          </div>
 
-              <div className="flex justify-between items-center">
-                <div className="flex items-center">
-                  <Battery className="h-5 w-5 text-gray-400 mr-3" />
-                  <span className="text-sm text-gray-600">Battery</span>
-                </div>
-                <span className="font-mono font-medium">{currentData.battery_voltage_v} V</span>
-              </div>
+          {/* ---------------- CHARTS ---------------- */}
 
-              <div className="flex justify-between items-center">
-                <div className="flex items-center">
-                  <Thermometer className="h-5 w-5 text-gray-400 mr-3" />
-                  <span className="text-sm text-gray-600">Coolant</span>
-                </div>
-                <span className="font-mono font-medium">{currentData.coolant_temp_c}°C</span>
-              </div>
-
-              <div className="flex justify-between items-center">
-                <div className="flex items-center">
-                  <Activity className="h-5 w-5 text-gray-400 mr-3" />
-                  <span className="text-sm text-gray-600">Brake Wear</span>
-                </div>
-                <span className="font-mono font-medium">{currentData.brake_wear_percent}%</span>
-              </div>
-            </div>
-
-            <div className="lg:col-span-2 card">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-gray-900">Live Feed</h3>
-                <span className="text-xs text-gray-400 animate-pulse">● Recieving data</span>
-              </div>
-              <ResponsiveContainer width="100%" height={250}>
+          {/* CUSTOMER: single combined chart */}
+          {!isAdvancedUser && (
+            <div className="card">
+              <h3 className="font-medium mb-4 text-gray-50">Recent Trends</h3>
+              <ResponsiveContainer width="100%" height={320}>
                 <LineChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                  <XAxis dataKey="time" hide />
-                  <YAxis domain={['auto', 'auto']} width={40} fontSize={12} tick={{ fill: '#9ca3af' }} />
-                  <Tooltip
-                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                  />
-                  <Legend iconType="circle" />
-                  <Line
-                    type="monotone"
-                    dataKey="speed"
-                    stroke="#2563eb"
-                    strokeWidth={2}
-                    dot={false}
-                    name="Speed"
-                    isAnimationActive={false}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="rpm"
-                    stroke="#10b981"
-                    strokeWidth={2}
-                    dot={false}
-                    name="RPM"
-                    isAnimationActive={false}
-                  />
+                  <CartesianGrid strokeDasharray="4 4" stroke="#374151" />
+                  <XAxis dataKey="time" label={{ value: "Time", position: "insideBottom", offset: -5 }} stroke="#9CA3AF" />
+                  <YAxis yAxisId="left" stroke="#9CA3AF" />
+                  <YAxis yAxisId="right" orientation="right" stroke="#9CA3AF" />
+                  <Tooltip contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151', color: '#F3F4F6' }} />
+                  <Legend wrapperStyle={{ color: '#F3F4F6' }} />
+                  <Line yAxisId="left" dataKey="speed" stroke="#2563eb" dot={false} name="Speed (km/h)" />
+                  <Line yAxisId="left" dataKey="engineTemp" stroke="#dc2626" dot={false} name="Engine Temp (°C)" />
+                  <Line yAxisId="right" dataKey="rpm" stroke="#16a34a" dot={false} name="RPM" />
                 </LineChart>
               </ResponsiveContainer>
             </div>
-          </div>
+          )}
+
+          {/* ADVANCED USERS: multiple charts */}
+          {isAdvancedUser && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <SimpleChart title="Speed (km/h)" dataKey="speed" color="#2563eb" data={chartData} />
+              <SimpleChart title="RPM" dataKey="rpm" color="#16a34a" data={chartData} />
+              <SimpleChart title="Engine Temp (°C)" dataKey="engineTemp" color="#dc2626" data={chartData} />
+            </div>
+          )}
         </>
       )}
     </div>
   );
-};
+}
 
-export default Telemetry;
+/* ---------------- Components ---------------- */
+
+function Metric({ title, value, unit, icon, danger }: any) {
+  return (
+    <div className="card">
+      <div className="flex justify-between items-center mb-2">
+        <span className="text-sm text-gray-400">{title}</span>
+        {icon}
+      </div>
+      <div className={`text-3xl font-semibold tabular-nums text-gray-50 ${danger ? "text-red-400" : ""}`} style={{ fontFamily: '"Space Mono", monospace' }}>
+        {value}
+        <span className="text-sm ml-1 text-gray-400">{unit}</span>
+      </div>
+    </div>
+  );
+}
+
+function SimpleChart({ title, dataKey, color, data }: any) {
+  return (
+    <div className="card">
+      <h3 className="font-medium mb-3 text-gray-50">{title}</h3>
+      <ResponsiveContainer width="100%" height={260}>
+        <LineChart data={data}>
+          <CartesianGrid strokeDasharray="4 4" stroke="#374151" />
+          <XAxis dataKey="time" stroke="#9CA3AF" />
+          <YAxis stroke="#9CA3AF" />
+          <Tooltip contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151', color: '#F3F4F6' }} />
+          <Line dataKey={dataKey} stroke={color} dot={false} />
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}

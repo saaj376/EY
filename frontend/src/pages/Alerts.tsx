@@ -36,19 +36,19 @@ const Alerts = ({ role, userId, serviceCentreId }: AlertsProps) => {
           const res = await serviceApi.getAlerts(serviceCentreId, role);
           alertsData = res.data;
         } else {
-          setLoading(false);
           return;
         }
-        setAlerts(alertsData);
-        setDiagnoses(diagnosisData);
-      } catch (error) {
-        console.error('Error fetching data:', error);
+        setAlerts(response.data);
+      } catch (err) {
+        console.error(err);
       } finally {
         setLoading(false);
       }
     };
-
-    fetchData();
+  
+    fetchAlerts();
+    const interval = setInterval(fetchAlerts, 5000);
+    return () => clearInterval(interval);
   }, [role, userId, serviceCentreId]);
 
   const filteredAlerts = alerts.filter(alert => {
@@ -59,98 +59,108 @@ const Alerts = ({ role, userId, serviceCentreId }: AlertsProps) => {
 
   const getSeverityIcon = (severity: string) => {
     switch (severity) {
-      case 'HIGH': return <XCircle className="h-5 w-5 text-red-600" />;
-      case 'MEDIUM': return <AlertTriangle className="h-5 w-5 text-yellow-600" />;
-      default: return <Clock className="h-5 w-5 text-blue-600" />;
+      case 'HIGH':
+        return <XCircle className="h-5 w-5 text-red-400" />;
+      case 'MEDIUM':
+        return <AlertTriangle className="h-5 w-5 text-amber-400" />;
+      default:
+        return <Clock className="h-5 w-5 text-blue-400" />;
     }
   };
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
-      case 'HIGH': return 'bg-red-100 text-red-800 border-red-200';
-      case 'MEDIUM': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      default: return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'HIGH':
+        return 'bg-red-500/10 text-red-300 border-red-500/20';
+      case 'MEDIUM':
+        return 'bg-amber-500/10 text-amber-300 border-amber-500/20';
+      default:
+        return 'bg-blue-500/10 text-blue-300 border-blue-500/20';
     }
   };
 
-  const getDiagnosisForAlert = (alert: Alert) => {
-    // Assuming alert object has _id or we need to match appropriately
-    // The Alert type uses MongoDB _id but frontend usually strips it or maps it.
-    // Let's assume passed alert object has `_id` property from backend.
-    // If Typescript complains, we might need to cast or fix Interface.
-    // Standard MongoDB response includes _id. 
-    // The current Alert interface in types/index.ts DOES NOT include _id.
-    // But the backend sends it. I'll cast it to any to access _id safely or extend the type.
-    const alertId = (alert as any)._id;
-    return diagnoses.find(d => d.alert_id === alertId);
-  };
-
-  if (loading) return <div className="text-center py-12">Loading alerts...</div>;
+  if (loading) {
+    return <div className="text-center py-12 text-gray-400">Loading alerts...</div>;
+  }
 
   return (
-    <div className="space-y-6 relative">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Alerts</h1>
-          <p className="text-gray-600 mt-1">Monitor and manage vehicle alerts</p>
-        </div>
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-3xl font-semibold text-gray-50">Alerts</h1>
+        <p className="mt-1 text-sm text-gray-400">Monitor and manage vehicle alerts</p>
       </div>
 
       {/* Filters */}
       <div className="flex space-x-2">
-        {['all', 'active', 'resolved'].map(f => (
-          <button
-            key={f}
-            onClick={() => setFilter(f as any)}
-            className={`px-4 py-2 rounded-lg font-medium capitalize transition-colors ${filter === f ? 'bg-primary-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
-          >
-            {f}
-          </button>
-        ))}
+        <button
+          onClick={() => setFilter('all')}
+          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+            filter === 'all' ? 'bg-blue-500 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+          }`}
+        >
+          All ({alerts.length})
+        </button>
+        <button
+          onClick={() => setFilter('active')}
+          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+            filter === 'active' ? 'bg-blue-500 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+          }`}
+        >
+          Active ({alerts.filter(a => !a.resolved).length})
+        </button>
+        <button
+          onClick={() => setFilter('resolved')}
+          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+            filter === 'resolved' ? 'bg-blue-500 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+          }`}
+        >
+          Resolved ({alerts.filter(a => a.resolved).length})
+        </button>
       </div>
 
       {/* Alerts List */}
       <div className="space-y-4">
         {filteredAlerts.length === 0 ? (
           <div className="card text-center py-12">
-            <AlertTriangle className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No alerts found</h3>
-            <p className="text-gray-600">All clear! No alerts match your filter.</p>
+            <AlertTriangle className="h-16 w-16 text-gray-500 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-50 mb-2">No alerts found</h3>
+            <p className="text-gray-400">All clear! No alerts match your filter.</p>
           </div>
         ) : (
-          filteredAlerts.map((alert, idx) => {
-            const diagnosis = getDiagnosisForAlert(alert);
-            return (
-              <div key={idx} className="card hover:shadow-md transition-shadow cursor-pointer border border-transparent hover:border-gray-200"
-                onClick={() => setSelectedAlert(alert)}>
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start space-x-4 flex-1">
-                    <div className={`p-2 rounded-lg ${getSeverityColor(alert.severity)}`}>
-                      {getSeverityIcon(alert.severity)}
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-3 mb-2">
-                        <h3 className="text-lg font-semibold text-gray-900">{alert.alert_type}</h3>
-                        <span className={`badge ${getSeverityColor(alert.severity)}`}>
-                          {alert.severity}
+          filteredAlerts.map((alert, idx) => (
+            <div key={idx} className="card">
+              <div className="flex items-start justify-between">
+                <div className="flex items-start space-x-4 flex-1">
+                  <div className={`p-2 rounded-lg border ${getSeverityColor(alert.severity)}`}>
+                    {getSeverityIcon(alert.severity)}
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-3 mb-2">
+                      <h3 className="text-lg font-semibold text-gray-50">{alert.alert_type}</h3>
+                      <span className={`badge border ${getSeverityColor(alert.severity)}`}>
+                        {alert.severity}
+                      </span>
+                      {alert.resolved && (
+                        <span className="badge bg-emerald-500/10 text-emerald-300 border-emerald-500/20">
+                          <CheckCircle className="h-3 w-3 mr-1" />
+                          Resolved
                         </span>
-                        {diagnosis && (
-                          <span className="badge bg-purple-100 text-purple-800 flex items-center">
-                            <Stethoscope className="h-3 w-3 mr-1" /> Diagnosed
-                          </span>
-                        )}
-                        {alert.resolved && (
-                          <span className="badge bg-green-100 text-green-800">
-                            <CheckCircle className="h-3 w-3 mr-1" /> Resolved
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-gray-600 mb-2">Vehicle ID: {alert.vehicle_id}</p>
-                      <p className="text-sm text-gray-500">
-                        {format(new Date(alert.timestamp), 'MMM dd, yyyy HH:mm:ss')}
-                      </p>
+                      )}
                     </div>
+                    <p className="text-gray-400 mb-2">Vehicle ID: {alert.vehicle_id}</p>
+                    <p className="text-sm text-gray-500">
+                      {format(new Date(alert.timestamp), 'MMM dd, yyyy HH:mm:ss')}
+                    </p>
+                    {alert.value !== undefined && (
+                      <p className="text-sm text-gray-300 mt-2">
+                        Value: <span className="font-medium">{alert.value}</span>
+                      </p>
+                    )}
+                    {alert.feedback && (
+                      <p className="text-sm text-gray-400 mt-2">
+                        Feedback: <span className="italic">{alert.feedback}</span>
+                      </p>
+                    )}
                   </div>
                   <ArrowRight className="text-gray-400" />
                 </div>
