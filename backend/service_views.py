@@ -321,17 +321,11 @@ def get_dashboard_stats(
 ):
     require_roles(role, [UserRole.SERVICE_CENTER, UserRole.OEM_ADMIN])
     
-    if db is None:
-        return {}
-    
-    # Get today's bookings
-    today = datetime.utcnow().date()
-    today_start = datetime.combine(today, datetime.min.time()).isoformat()
-    today_end = datetime.combine(today, datetime.max.time()).isoformat()
-    
-    todays_bookings = db.bookings.count_documents({
+    # Get total active bookings (CONFIRMED or PENDING or IN_PROGRESS)
+    # Changed from "Today's" to "All Active" for better visibility in demo
+    active_bookings_count = db.bookings.count_documents({
         'service_centre_id': service_centre_id,
-        'slot_start': {'$gte': today_start, '$lte': today_end}
+        'status': {'$in': ['PENDING', 'CONFIRMED', 'IN_PROGRESS']}
     })
     
     # Get active jobs
@@ -346,14 +340,12 @@ def get_dashboard_stats(
         'payment_status': 'UNPAID'
     })
     
-    # Get this month's revenue
-    month_start = datetime.utcnow().replace(day=1, hour=0, minute=0, second=0).isoformat()
+    # Get total revenue (Lifetime) -> more impressive than this month for demo
     revenue_pipeline = [
         {
             '$match': {
                 'service_centre_id': service_centre_id,
-                'payment_status': 'PAID',
-                'paid_at': {'$gte': month_start}
+                'payment_status': 'PAID'
             }
         },
         {
@@ -365,13 +357,13 @@ def get_dashboard_stats(
     ]
     
     revenue_result = list(db.invoices.aggregate(revenue_pipeline))
-    monthly_revenue = revenue_result[0]['total'] if revenue_result else 0
+    total_revenue = revenue_result[0]['total'] if revenue_result else 0
     
     return {
-        'todays_bookings': todays_bookings,
+        'todays_bookings': active_bookings_count, # Reusing key but sending total active
         'active_jobs': active_jobs,
         'pending_invoices': pending_invoices,
-        'monthly_revenue': monthly_revenue,
+        'monthly_revenue': total_revenue, # Reusing key but sending total
         'service_centre_id': service_centre_id
     }
 

@@ -47,6 +47,8 @@ export interface Alert {
   vehicle_id: string;
   timestamp: string;
   alert_type: string;
+  type?: string; // Frontend alias
+  message?: string; // Description
   value: number;
   severity: "LOW" | "MEDIUM" | "HIGH";
   resolved: boolean;

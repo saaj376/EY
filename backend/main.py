@@ -155,112 +155,15 @@ def create_capa(payload: dict):
 # PHASE 3 â€“ SERVICE WORKFLOW
 # ----------------------------
 
-@app.post("/service/booking")
-def create_booking(payload: dict):
-    try:
-        return {
-            "booking_id": service.create_booking(
-                vehicle_id=payload["vehicle_id"],
-                user_id=payload["user_id"],
-                service_centre_id=payload["service_centre_id"],
-                slot_start=payload["slot_start"],
-                slot_end=payload["slot_end"],
-                current_role=payload["role"]
-            )
-        }
-    except ValueError as e:
-        # If the error contains alternatives, return them
-        if isinstance(e.args[0], dict) and "available_alternatives" in e.args[0]:
-            from fastapi import HTTPException
-            raise HTTPException(status_code=409, detail=e.args[0])
-        raise
+# ----------------------------
+# PHASE 3 – SERVICE WORKFLOW
+# ----------------------------
 
+# Note: Booking creation and other service workflows are handled 
+# both here and in service_views.py. 
+# We are delegating to service_views_router for clarity and robustness.
+# Keeping only unique global endpoints if any.
 
-# Add new endpoint to check availability before booking
-@app.get("/service/availability")
-def check_availability(
-    service_centre_id: str,
-    slot_start: str,
-    slot_end: str
-):
-    """Check if a service centre has capacity for a given time slot"""
-    return service.get_service_centre_capacity(service_centre_id, slot_start, slot_end)
-
-
-@app.get("/service/centres/slots")
-def get_service_centre_slots(
-    service_centre_id: str,
-    date: str  # YYYY-MM-DD format
-):
-    """Get available time slots for a specific service centre on a given date"""
-    return {
-        "service_centre_id": service_centre_id,
-        "date": date,
-        "slots": service.generate_available_slots(service_centre_id, date)
-    }
-
-
-@app.get("/service/centres/available")
-def get_available_centres_with_slots(
-    date: str  # YYYY-MM-DD format
-):
-    """Get all service centres with their available slots for a given date"""
-    return {
-        "date": date,
-        "service_centres": service.get_available_service_centres_with_slots(date)
-    }
-
-
-@app.post("/service/booking")
-def create_booking(payload: dict):
-    try:
-        return {
-            "booking_id": service.create_booking(
-                vehicle_id=payload["vehicle_id"],
-                user_id=payload["user_id"],
-                service_centre_id=payload["service_centre_id"],
-                slot_start=payload["slot_start"],
-                slot_end=payload["slot_end"],
-                current_role=payload["role"]
-            )
-        }
-    except ValueError as e:
-        # If the error contains alternatives, return them
-        if isinstance(e.args[0], dict) and "available_alternatives" in e.args[0]:
-            from fastapi import HTTPException
-            raise HTTPException(status_code=409, detail=e.args[0])
-        raise
-
-@app.post("/service/job")
-def create_job(payload: dict):
-    return {
-        "job_id": jobs.create_job_card(
-            booking_id=payload["booking_id"],
-            notes=payload.get("notes", ""),
-            current_role=payload["role"]
-        )
-    }
-
-@app.post("/service/invoice")
-def create_invoice(payload: dict):
-    return {
-        "invoice_id": invoices.create_invoice(
-            job_card_id=payload["job_card_id"],
-            parts=payload["parts"],
-            labour_cost=payload["labour_cost"],
-            tax=payload["tax"],
-            current_role=payload["role"]
-        )
-    }
-
-@app.post("/service/booking/cancel")
-def cancel_booking(payload: dict):
-    service.cancel_booking(
-        booking_id=payload["booking_id"],
-        reason=payload.get("reason", "User cancelled"),
-        current_role=payload["role"]
-    )
-    return {"status": "cancelled"}
 
 # ----------------------------
 # ANALYTICS ENDPOINTS

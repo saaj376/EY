@@ -12,12 +12,13 @@ interface ServiceBookingProps {
 }
 
 const ServiceBooking = ({ role, userId, serviceCentreId }: ServiceBookingProps) => {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'bookings' | 'jobs' | 'invoices'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'bookings' | 'jobs' | 'invoices' | 'alerts'>('dashboard');
 
   const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [jobs, setJobs] = useState<JobCard[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [alerts, setAlerts] = useState<Alert[]>([]);
 
   const [loading, setLoading] = useState(true);
   const [showBookingForm, setShowBookingForm] = useState(false);
@@ -73,16 +74,18 @@ const ServiceBooking = ({ role, userId, serviceCentreId }: ServiceBookingProps) 
           setJobs(jobsRes.data);
           setInvoices(invoicesRes.data);
         } else if (role === UserRole.SERVICE_CENTER) {
-          const [statsRes, bookingsRes, jobsRes, invoicesRes] = await Promise.all([
+          const [statsRes, bookingsRes, jobsRes, invoicesRes, alertsRes] = await Promise.all([
             serviceApi.getDashboardStats(serviceCentreId, role),
             serviceApi.getBookings(serviceCentreId, role),
             serviceApi.getJobs(serviceCentreId, role),
             serviceApi.getInvoices(serviceCentreId, role),
+            serviceApi.getAlerts(serviceCentreId, role),
           ]);
           setDashboardStats(statsRes.data);
           setBookings(bookingsRes.data);
           setJobs(jobsRes.data);
           setInvoices(invoicesRes.data);
+          setAlerts(alertsRes.data);
         }
       } catch (error) {
         console.error('Error fetching service data:', error);
@@ -221,6 +224,26 @@ const ServiceBooking = ({ role, userId, serviceCentreId }: ServiceBookingProps) 
     }
   };
 
+  const handleGenerateInvoice = async () => {
+    if (!editingJob) return;
+    if (!confirm('Generate invoice for this completed job?')) return;
+
+    try {
+      await serviceWorkflowApi.createInvoice({
+        job_card_id: editingJob.job_card_id,
+        labour_cost: 150, // Mock labour cost
+        parts: [], // Mock parts
+        role
+      });
+      alert('Invoice generated successfully');
+      setEditingJob(null);
+      window.location.reload();
+    } catch (error) {
+      console.error('Error generating invoice:', error);
+      alert('Failed to generate invoice');
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'CONFIRMED':
@@ -332,6 +355,15 @@ const ServiceBooking = ({ role, userId, serviceCentreId }: ServiceBookingProps) 
         >
           Invoices
         </button>
+        {role === UserRole.SERVICE_CENTER && (
+          <button
+            onClick={() => setActiveTab('alerts')}
+            className={`pb-3 px-1 text-sm font-medium transition-colors ${activeTab === 'alerts' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400 hover:text-gray-300'
+              }`}
+          >
+            Alerts
+          </button>
+        )}
       </div>
 
       {/* Content */}
@@ -512,20 +544,33 @@ const ServiceBooking = ({ role, userId, serviceCentreId }: ServiceBookingProps) 
                     placeholder="Update job progress or notes..."
                   />
                 </div>
-                <div className="flex justify-end space-x-3 mt-6">
-                  <button
-                    type="button"
-                    onClick={() => setEditingJob(null)}
-                    className="px-4 py-2 rounded-lg text-gray-300 hover:text-white hover:bg-gray-800 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors font-medium"
-                  >
-                    Update Job
-                  </button>
+                <div className="flex justify-between space-x-3 mt-6">
+                  {/* Invoice Button for Completed Jobs */}
+                  {editingJob.status === 'WORK_COMPLETED' && (
+                    <button
+                      type="button"
+                      onClick={handleGenerateInvoice}
+                      className="px-4 py-2 rounded-lg text-emerald-300 bg-emerald-500/10 border border-emerald-500/30 hover:bg-emerald-500/20 transition-colors"
+                    >
+                      Generate Invoice
+                    </button>
+                  )}
+
+                  <div className="flex space-x-3">
+                    <button
+                      type="button"
+                      onClick={() => setEditingJob(null)}
+                      className="px-4 py-2 rounded-lg text-gray-300 hover:text-white hover:bg-gray-800 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors font-medium"
+                    >
+                      Update Job
+                    </button>
+                  </div>
                 </div>
               </form>
             </div>
@@ -636,16 +681,45 @@ const ServiceBooking = ({ role, userId, serviceCentreId }: ServiceBookingProps) 
                             to {booking.slot_end ? format(new Date(booking.slot_end), 'HH:mm') : 'N/A'}
                           </div>
                         </div>
-                        {/* View Telemetry Button for Service Center */}
-                        {role === UserRole.SERVICE_CENTER && (
-                          <button
-                            onClick={() => setViewingVehicle({ vehicleId: booking.vehicle_id })}
-                            className="flex items-center space-x-1 text-xs text-blue-400 hover:text-blue-300 px-2 py-1"
-                          >
-                            <Activity className="h-3 w-3" />
-                            <span>View Telemetry</span>
-                          </button>
-                        )}
+
+                        <div className="flex space-x-2">
+                          {/* View Telemetry Button */}
+                          {role === UserRole.SERVICE_CENTER && (
+                            <button
+                              onClick={() => setViewingVehicle({ vehicleId: booking.vehicle_id })}
+                              className="flex items-center space-x-1 text-xs text-blue-400 hover:text-blue-300 px-2 py-1"
+                            >
+                              <Activity className="h-3 w-3" />
+                              <span>Telemetry</span>
+                            </button>
+                          )}
+
+                          {/* Start Job Button */}
+                          {role === UserRole.SERVICE_CENTER && booking.status === 'CONFIRMED' && (
+                            <button
+                              onClick={async () => {
+                                if (confirm('Start job for this booking?')) {
+                                  try {
+                                    await serviceWorkflowApi.createJob({
+                                      booking_id: bookingId,
+                                      notes: 'Job started from portal',
+                                      role
+                                    });
+                                    alert('Job started successfully');
+                                    window.location.reload();
+                                  } catch (error) {
+                                    console.error('Error starting job:', error);
+                                    alert('Failed to start job');
+                                  }
+                                }
+                              }}
+                              className="flex items-center space-x-1 text-xs bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 px-3 py-1 rounded transition-colors border border-emerald-500/30"
+                            >
+                              <Wrench className="h-3 w-3" />
+                              <span>Start Job</span>
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -762,6 +836,34 @@ const ServiceBooking = ({ role, userId, serviceCentreId }: ServiceBookingProps) 
                   </div>
                 );
               })
+            )}
+          </div>
+        )}
+        {/* Alerts List */}
+        {activeTab === 'alerts' && (
+          <div className="text-sm text-gray-400">
+            {alerts.length === 0 ? (
+              <p className="text-center py-8">No active alerts found.</p>
+            ) : (
+              alerts.map((alert, index) => (
+                <div key={index} className="card p-4 mb-4 hover:border-gray-600 transition-colors border-l-4 border-l-red-500/50">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <div className="flex items-center space-x-2 mb-1">
+                        <AlertTriangle className="h-4 w-4 text-red-400" />
+                        <span className="text-red-300 font-medium">{alert.type || 'Vehicle Alert'}</span>
+                        <span className="text-xs px-2 py-0.5 rounded bg-red-500/10 text-red-400 uppercase border border-red-500/20">
+                          {alert.severity || 'HIGH'}
+                        </span>
+                      </div>
+                      <p className="text-gray-300">{alert.message}</p>
+                      <div className="text-xs text-gray-500 mt-2">
+                        Vehicle: {alert.vehicle_id} • {format(new Date(alert.timestamp), 'MMM dd, HH:mm')}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))
             )}
           </div>
         )}
