@@ -7,10 +7,10 @@ import type {
   Booking,
   JobCard,
   Invoice,
-  RCA,
   CAPA,
   Analytics,
-  UserRole
+  UserRole,
+  DashboardStats
 } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
@@ -65,11 +65,23 @@ export const userApi = {
 
 // Service Views
 export const serviceApi = {
+  getDashboardStats: (serviceCentreId: string, role: UserRole) =>
+    api.get<DashboardStats>(`/service/dashboard/stats?service_centre_id=${serviceCentreId}`, { headers: { 'X-Role': role } }),
+
   getBookings: (serviceCentreId: string, role: UserRole) =>
     api.get<Booking[]>(`/service/bookings?service_centre_id=${serviceCentreId}`, { headers: { 'X-Role': role } }),
 
   getJobs: (serviceCentreId: string, role: UserRole) =>
     api.get<JobCard[]>(`/service/jobs?service_centre_id=${serviceCentreId}`, { headers: { 'X-Role': role } }),
+
+  getJobDetails: (jobId: string, role: UserRole) =>
+    api.get<JobCard>(`/service/job/${jobId}/details`, { headers: { 'X-Role': role } }),
+
+  getInvoices: (serviceCentreId: string, role: UserRole) =>
+    api.get<Invoice[]>(`/service/invoices?service_centre_id=${serviceCentreId}`, { headers: { 'X-Role': role } }),
+
+  getInvoice: (invoiceId: string, role: UserRole) =>
+    api.get<Invoice>(`/service/invoice/${invoiceId}`, { headers: { 'X-Role': role } }),
 
   getAlerts: (serviceCentreId: string, role: UserRole) =>
     api.get<Alert[]>(`/service/alerts?service_centre_id=${serviceCentreId}`, { headers: { 'X-Role': role } }),
@@ -82,9 +94,21 @@ export const serviceApi = {
 
   getNotifications: (serviceCentreId: string, role: UserRole) =>
     api.get(`/service/notifications?service_centre_id=${serviceCentreId}`, { headers: { 'X-Role': role } }),
+
+  checkAvailability: (serviceCentreId: string, start: string, end: string, role: UserRole) =>
+    api.get(`/service/availability`, {
+      params: { service_centre_id: serviceCentreId, slot_start: start, slot_end: end },
+      headers: { 'X-Role': role }
+    }),
+
+  getServiceCentreSlots: (serviceCentreId: string, date: string, role: UserRole) =>
+    api.get(`/service/centres/slots`, {
+      params: { service_centre_id: serviceCentreId, date },
+      headers: { 'X-Role': role }
+    }),
 };
 
-// RCA
+// RCA (unchanged)
 export const rcaApi = {
   create: (payload: {
     alert_id: string;
@@ -95,7 +119,7 @@ export const rcaApi = {
   }) => api.post('/rca', payload),
 };
 
-// CAPA
+// CAPA (unchanged)
 export const capaApi = {
   create: (payload: {
     rca_id: string;
@@ -118,25 +142,39 @@ export const serviceWorkflowApi = {
     role: UserRole;
   }) => api.post('/service/booking', payload),
 
-  createJob: (payload: {
-    booking_id: string;
-    notes?: string;
-    role: UserRole;
-  }) => api.post('/service/job', payload),
-
-  createInvoice: (payload: {
-    job_card_id: string;
-    parts: Array<{ name: string; cost: number }>;
-    labour_cost: number;
-    tax: number;
-    role: UserRole;
-  }) => api.post('/service/invoice', payload),
-
   cancelBooking: (payload: {
     booking_id: string;
     reason?: string;
     role: UserRole;
   }) => api.post('/service/booking/cancel', payload),
+
+  createJob: (payload: {
+    booking_id: string;
+    notes?: string;
+    assigned_technician?: string;
+    role: UserRole;
+  }) => api.post('/service/job/create', payload),
+
+  updateJobStatus: (jobId: string, payload: { status: string; notes?: string; technician?: string; role: UserRole }) =>
+    api.put(`/service/job/${jobId}/status`, payload),
+
+  addPartsToJob: (jobId: string, payload: { parts: any[]; added_by?: string; role: UserRole }) =>
+    api.post(`/service/job/${jobId}/parts`, payload),
+
+  updateLabourHours: (jobId: string, payload: { hours: number; technician?: string; role: UserRole }) =>
+    api.put(`/service/job/${jobId}/labour`, payload),
+
+  createInvoice: (payload: {
+    job_card_id: string;
+    parts?: Array<{ name: string; quantity: number; cost: number }>;
+    labour_cost?: number;
+    tax?: number;
+    labour_rate_per_hour?: number;
+    role: UserRole;
+  }) => api.post('/service/invoice/create', payload),
+
+  updatePayment: (invoiceId: string, payload: { payment_status: string; payment_method?: string; transaction_id?: string; role: UserRole }) =>
+    api.put(`/service/invoice/${invoiceId}/payment`, payload),
 };
 
 

@@ -10,7 +10,7 @@ interface CAPAProps {
   serviceCentreId: string;
 }
 
-const CAPA = ({ role, serviceCentreId }: CAPAProps) => {
+const CAPA = ({ role }: CAPAProps) => {
   const [showForm, setShowForm] = useState(false);
   const [newCAPA, setNewCAPA] = useState({
     rca_id: '',
@@ -193,11 +193,10 @@ const CAPA = ({ role, serviceCentreId }: CAPAProps) => {
                       <div className="flex items-center space-x-3 mb-2">
                         <ClipboardCheck className="h-5 w-5 text-blue-400" />
                         <h3 className="font-semibold text-gray-50">CAPA #{capa.capa_id.slice(-8)}</h3>
-                        <span className={`badge border ${
-                          capa.status === 'COMPLETED' ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20' :
-                          overdue ? 'bg-red-500/10 text-red-300 border-red-500/20' :
-                          'bg-amber-500/10 text-amber-300 border-amber-500/20'
-                        }`}>
+                        <span className={`badge border ${capa.status === 'COMPLETED' ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20' :
+                            overdue ? 'bg-red-500/10 text-red-300 border-red-500/20' :
+                              'bg-amber-500/10 text-amber-300 border-amber-500/20'
+                          }`}>
                           {capa.status}
                         </span>
                         {overdue && (

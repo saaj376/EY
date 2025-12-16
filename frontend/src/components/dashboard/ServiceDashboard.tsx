@@ -1,12 +1,10 @@
 
 import { useEffect, useState } from 'react';
 import {
-    ClipboardCheck,
     Calendar,
     AlertOctagon,
     FileText,
-    CheckSquare,
-    Clock
+    CheckSquare
 } from 'lucide-react';
 import { serviceApi } from '../../services/api';
 import type { Booking, Alert } from '../../types';
@@ -126,7 +124,7 @@ const ServiceDashboard = ({ serviceCentreId }: ServiceDashboardProps) => {
                                         <td className="px-4 py-3 text-gray-600">{booking.user_id}</td>
                                         <td className="px-4 py-3">
                                             <span className={`px-2 py-1 rounded-full text-xs font-semibold ${booking.status === 'CONFIRMED' ? 'bg-blue-100 text-blue-800' :
-                                                    booking.status === 'COMPLETED' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                                                booking.status === 'COMPLETED' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
                                                 }`}>
                                                 {booking.status}
                                             </span>

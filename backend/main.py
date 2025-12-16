@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+﻿from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 # Phase 1
@@ -27,9 +27,53 @@ import analytics
 app = FastAPI(
     title="Vehicle Intelligence Platform",
     version="1.0",
-    description="Telemetry → ML → Alerts → RCA → CAPA → Service Closure"
+    description="Telemetry â†’ ML â†’ Alerts â†’ RCA â†’ CAPA â†’ Service Closure"
 )
 
+
+
+# ----------------------------
+# ENHANCED SERVICE CENTRE ENDPOINTS  
+# ----------------------------
+
+@app.get('/service/centres')
+def get_all_centres():
+    '''Get all service centres'''
+    import service
+    return service.get_all_service_centres()
+
+@app.put('/service/booking/{booking_id}/status')
+def update_booking_status(booking_id: str, payload: dict):
+    '''Update booking status'''
+    import service
+    service.update_booking_status(
+        booking_id=booking_id,
+        status=payload['status'],
+        notes=payload.get('notes', ''),
+        current_role=payload['role']
+    )
+    return {'status': 'success'}
+# ----------------------------
+# ENHANCED SERVICE CENTRE ENDPOINTS  
+# ----------------------------
+
+@app.get('/service/centres')
+def get_all_centres():
+    '''Get all service centres'''
+    import service
+    return service.get_all_service_centres()
+
+@app.put('/service/booking/{booking_id}/status')
+def update_booking_status(booking_id: str, payload: dict):
+    '''Update booking status'''
+    import service
+    service.update_booking_status(
+        booking_id=booking_id,
+        status=payload['status'],
+        notes=payload.get('notes', ''),
+        current_role=payload['role']
+    )
+    return {'status': 'success'}
 # ----------------------------
 # CORS MIDDLEWARE
 # ----------------------------
@@ -75,7 +119,7 @@ def root():
     }
 
 # ----------------------------
-# PHASE 3 – RCA ENDPOINTS
+# PHASE 3 â€“ RCA ENDPOINTS
 # ----------------------------
 
 @app.post("/rca")
@@ -91,7 +135,7 @@ def create_rca(payload: dict):
     }
 
 # ----------------------------
-# PHASE 3 – CAPA ENDPOINTS
+# PHASE 3 â€“ CAPA ENDPOINTS
 # ----------------------------
 
 @app.post("/capa")
@@ -108,7 +152,7 @@ def create_capa(payload: dict):
     }
 
 # ----------------------------
-# PHASE 3 – SERVICE WORKFLOW
+# PHASE 3 â€“ SERVICE WORKFLOW
 # ----------------------------
 
 @app.post("/service/booking")
@@ -253,3 +297,4 @@ def start_background_services():
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
+

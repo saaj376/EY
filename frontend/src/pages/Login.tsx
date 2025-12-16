@@ -103,18 +103,15 @@ const Login = () => {
                         setSelectedRole(role as UserRole);
                         setError('');
                       }}
-                      className={`p-4 rounded-lg border-2 transition-all ${
-                        isSelected
+                      className={`p-4 rounded-lg border-2 transition-all ${isSelected
                           ? 'border-primary-600 bg-primary-50 shadow-md'
                           : 'border-gray-200 hover:border-gray-300 bg-white'
-                      }`}
+                        }`}
                     >
-                      <Icon className={`h-6 w-6 mx-auto mb-2 ${
-                        isSelected ? 'text-primary-600' : 'text-gray-400'
-                      }`} />
-                      <p className={`text-sm font-medium ${
-                        isSelected ? 'text-primary-700' : 'text-gray-700'
-                      }`}>
+                      <Icon className={`h-6 w-6 mx-auto mb-2 ${isSelected ? 'text-primary-600' : 'text-gray-400'
+                        }`} />
+                      <p className={`text-sm font-medium ${isSelected ? 'text-primary-700' : 'text-gray-700'
+                        }`}>
                         {info.label}
                       </p>
                     </button>
@@ -162,7 +159,7 @@ const Login = () => {
                       setServiceCentreId(e.target.value);
                       setError('');
                     }}
-                    placeholder={currentRoleInfo.serviceCentrePlaceholder}
+                    placeholder={(currentRoleInfo as any).serviceCentrePlaceholder}
                     className="input pl-10"
                     required
                   />
@@ -190,7 +187,7 @@ const Login = () => {
           {/* Demo Credentials Hint */}
           <div className="mt-6 pt-6 border-t border-gray-200">
             <p className="text-xs text-gray-500 text-center">
-              <strong>Demo Mode:</strong> Enter any User ID to continue. 
+              <strong>Demo Mode:</strong> Enter any User ID to continue.
               For Service Center, also enter a Service Centre ID.
             </p>
           </div>
