@@ -1,46 +1,20 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Car, LogIn, User, Building2, Shield, BarChart3 } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
+import { Car, User, Building2, Shield, BarChart3, Lock, Mail } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { UserRole } from '../types';
+import { authApi } from '../services/api';
+import { GoogleLogin } from '@react-oauth/google';
 
 const Login = () => {
-  const [selectedRole, setSelectedRole] = useState<UserRole>(UserRole.CUSTOMER);
-  const [userId, setUserId] = useState('');
-  const [serviceCentreId, setServiceCentreId] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const roleInfo = {
-    [UserRole.CUSTOMER]: {
-      label: 'Customer',
-      icon: User,
-      description: 'View your vehicles, alerts, and service bookings',
-      placeholder: 'Enter your User ID (e.g., user123)',
-    },
-    [UserRole.SERVICE_CENTER]: {
-      label: 'Service Center',
-      icon: Building2,
-      description: 'Manage service bookings, job cards, and CAPA items',
-      placeholder: 'Enter your User ID',
-      serviceCentrePlaceholder: 'Enter Service Centre ID (e.g., service001)',
-    },
-    [UserRole.OEM_ADMIN]: {
-      label: 'OEM Admin',
-      icon: Shield,
-      description: 'Full platform access including RCA and analytics',
-      placeholder: 'Enter your User ID',
-    },
-    [UserRole.OEM_ANALYST]: {
-      label: 'OEM Analyst',
-      icon: BarChart3,
-      description: 'Access analytics, telemetry, and RCA management',
-      placeholder: 'Enter your User ID',
-    },
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
@@ -69,8 +43,6 @@ const Login = () => {
     navigate('/dashboard');
   };
 
-  const currentRoleInfo = roleInfo[selectedRole];
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-primary-100 flex items-center justify-center p-4">
       <div className="max-w-md w-full">
@@ -90,10 +62,11 @@ const Login = () => {
         {/* Login Card */}
         <div className="bg-white rounded-2xl shadow-xl p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Role Selection */}
+
+            {/* Email Input */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">
-                Select Your Role
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Email Address
               </label>
               <div className="grid grid-cols-2 gap-3">
                 {Object.entries(roleInfo).map(([role, info]) => {
@@ -122,9 +95,6 @@ const Login = () => {
                   );
                 })}
               </div>
-              <p className="text-xs text-gray-500 mt-2 text-center">
-                {currentRoleInfo.description}
-              </p>
             </div>
 
             {/* User ID Input (Hidden for Service Center) */}
@@ -181,14 +151,15 @@ const Login = () => {
             )}
 
             {/* Submit Button */}
-            <button
-              type="submit"
-              className="w-full btn-primary flex items-center justify-center space-x-2 py-3 text-lg"
-            >
-              <LogIn className="h-5 w-5" />
-              <span>Sign In</span>
-            </button>
-          </form>
+            <div>
+              <button
+                type="submit"
+                disabled={loading}
+                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+              >
+                {loading ? 'Signing in...' : 'Sign in'}
+              </button>
+            </div>
 
           {/* Demo Credentials Hint */}
           <div className="mt-6 pt-6 border-t border-gray-200">
