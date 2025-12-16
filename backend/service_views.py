@@ -24,6 +24,7 @@ def get_my_bookings(
     if db is None:
         return []
 
+    print(f"[DEBUG] get_my_bookings called with service_centre_id='{service_centre_id}', status='{status}'")
     query = {'service_centre_id': service_centre_id}
     if status:
         query['status'] = status

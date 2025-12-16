@@ -211,6 +211,26 @@ def get_available_centres_with_slots(
     }
 
 
+@app.post("/service/booking")
+def create_booking(payload: dict):
+    try:
+        return {
+            "booking_id": service.create_booking(
+                vehicle_id=payload["vehicle_id"],
+                user_id=payload["user_id"],
+                service_centre_id=payload["service_centre_id"],
+                slot_start=payload["slot_start"],
+                slot_end=payload["slot_end"],
+                current_role=payload["role"]
+            )
+        }
+    except ValueError as e:
+        # If the error contains alternatives, return them
+        if isinstance(e.args[0], dict) and "available_alternatives" in e.args[0]:
+            from fastapi import HTTPException
+            raise HTTPException(status_code=409, detail=e.args[0])
+        raise
+
 @app.post("/service/job")
 def create_job(payload: dict):
     return {

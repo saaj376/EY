@@ -19,7 +19,7 @@ const AppRoutes = () => {
   // Ensure we have valid values
   const currentRole = role || UserRole.CUSTOMER;
   const currentUserId = userId || 'user123';
-  const currentServiceCentreId = serviceCentreId || '69413b45ef229cf06597b4ae';
+  const currentServiceCentreId = serviceCentreId || '694036caf68d90b5620e1860';
 
   return (
     <Routes>

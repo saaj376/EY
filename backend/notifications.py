@@ -67,14 +67,17 @@ def notify_service_centre(
     service_centre_id: str,
     message: str,
     category: str = "INFO",
-    channel: str = "SMS"
+    channel: str = "SMS",
+    **kwargs
 ):
-    _insert_notification({
+    payload = {
         "service_centre_id": service_centre_id,
         "channel": channel,
         "category": category,
         "message": message
-    })
+    }
+    payload.update(kwargs)
+    _insert_notification(payload)
 
 
 def notify_oem_security(

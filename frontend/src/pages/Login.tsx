@@ -44,7 +44,11 @@ const Login = () => {
     e.preventDefault();
     setError('');
 
-    if (!userId.trim()) {
+    const effectiveUserId = selectedRole === UserRole.SERVICE_CENTER
+      ? `service_${serviceCentreId.trim().substring(0, 6)}` // Generate a dummy user ID for SC
+      : userId.trim();
+
+    if (selectedRole !== UserRole.SERVICE_CENTER && !userId.trim()) {
       setError('Please enter a User ID');
       return;
     }
@@ -57,7 +61,7 @@ const Login = () => {
     // Login with the provided credentials
     login(
       selectedRole,
-      userId.trim(),
+      effectiveUserId,
       selectedRole === UserRole.SERVICE_CENTER ? serviceCentreId.trim() : undefined
     );
 
@@ -104,8 +108,8 @@ const Login = () => {
                         setError('');
                       }}
                       className={`p-4 rounded-lg border-2 transition-all ${isSelected
-                          ? 'border-primary-600 bg-primary-50 shadow-md'
-                          : 'border-gray-200 hover:border-gray-300 bg-white'
+                        ? 'border-primary-600 bg-primary-50 shadow-md'
+                        : 'border-gray-200 hover:border-gray-300 bg-white'
                         }`}
                     >
                       <Icon className={`h-6 w-6 mx-auto mb-2 ${isSelected ? 'text-primary-600' : 'text-gray-400'
@@ -123,26 +127,28 @@ const Login = () => {
               </p>
             </div>
 
-            {/* User ID Input */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                User ID
-              </label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                <input
-                  type="text"
-                  value={userId}
-                  onChange={(e) => {
-                    setUserId(e.target.value);
-                    setError('');
-                  }}
-                  placeholder={currentRoleInfo.placeholder}
-                  className="input pl-10"
-                  required
-                />
+            {/* User ID Input (Hidden for Service Center) */}
+            {selectedRole !== UserRole.SERVICE_CENTER && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  User ID
+                </label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <input
+                    type="text"
+                    value={userId}
+                    onChange={(e) => {
+                      setUserId(e.target.value);
+                      setError('');
+                    }}
+                    placeholder={currentRoleInfo.placeholder}
+                    className="input pl-10"
+                    required
+                  />
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Service Centre ID (only for Service Center role) */}
             {selectedRole === UserRole.SERVICE_CENTER && (
