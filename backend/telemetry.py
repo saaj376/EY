@@ -86,6 +86,8 @@ from auth import get_current_role, require_roles
 from utils import validate_telemetry, UserRole
 from redis_client import set_telemetry, get_telemetry
 from db import telemetry_col
+from simulator import telemetry_simulator
+
 
 
 router = APIRouter()

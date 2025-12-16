@@ -12,7 +12,7 @@ manager = ConnectionManager()
 @router.websocket("/ws/telemetry/{vehicle_id}")
 async def telemetry_socket(websocket: WebSocket, vehicle_id: str):
     # NOTE: for demo, user_id comes from query param or header
-    user_id = websocket.headers.get("X-User-Id", "demo-user")
+    user_id = websocket.query_params.get("user_id") or websocket.headers.get("X-User-Id", "demo-user")
 
     await manager.connect(vehicle_id, websocket)
 

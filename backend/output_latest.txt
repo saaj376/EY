@@ -1,0 +1,2 @@
+--- vehicles ---
+ID: v1, Owner: u1, Model: i20
