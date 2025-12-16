@@ -5,9 +5,5 @@ python-dotenv
 numpy
 scikit-learn
 langgraph
-bcrypt
+passlib[bcrypt]
 pyjwt
-redis
-websockets
-google-auth
-requests
