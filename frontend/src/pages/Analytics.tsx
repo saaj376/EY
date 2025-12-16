@@ -31,11 +31,11 @@ const Analytics = ({ role }: AnalyticsProps) => {
   }, [role]);
 
   if (loading) {
-    return <div className="text-center py-12">Loading analytics...</div>;
+    return <div className="text-center py-12 text-gray-400">Loading analytics...</div>;
   }
 
   if (!analytics) {
-    return <div className="text-center py-12">No analytics data available</div>;
+    return <div className="text-center py-12 text-gray-400">No analytics data available</div>;
   }
 
   const severityData = analytics.severity_distribution.map(item => ({
@@ -49,10 +49,10 @@ const Analytics = ({ role }: AnalyticsProps) => {
   }));
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Analytics</h1>
-        <p className="text-gray-600 mt-1">Platform performance metrics and insights</p>
+        <h1 className="text-3xl font-semibold text-gray-50">Analytics</h1>
+        <p className="mt-1 text-sm text-gray-400">Platform performance metrics and insights</p>
       </div>
 
       {/* Key Metrics */}
@@ -60,75 +60,75 @@ const Analytics = ({ role }: AnalyticsProps) => {
         <div className="card">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Anomaly Rate</p>
-              <p className="text-3xl font-bold text-gray-900 mt-2">
+              <p className="text-sm text-gray-400">Anomaly Rate</p>
+              <p className="text-3xl font-semibold text-gray-50 mt-2" style={{ fontFamily: '"Space Mono", monospace' }}>
                 {(analytics.anomaly_score_stats.anomaly_rate * 100).toFixed(1)}%
               </p>
             </div>
-            <AlertTriangle className="h-12 w-12 text-yellow-500" />
+            <AlertTriangle className="h-12 w-12 text-amber-400" />
           </div>
         </div>
 
         <div className="card">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Alert Rate</p>
-              <p className="text-3xl font-bold text-gray-900 mt-2">
+              <p className="text-sm text-gray-400">Alert Rate</p>
+              <p className="text-3xl font-semibold text-gray-50 mt-2" style={{ fontFamily: '"Space Mono", monospace' }}>
                 {(analytics.alert_rate * 100).toFixed(2)}%
               </p>
             </div>
-            <TrendingUp className="h-12 w-12 text-blue-500" />
+            <TrendingUp className="h-12 w-12 text-blue-400" />
           </div>
         </div>
 
         <div className="card">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Mean Detection Time</p>
-              <p className="text-3xl font-bold text-gray-900 mt-2">
+              <p className="text-sm text-gray-400">Mean Detection Time</p>
+              <p className="text-3xl font-semibold text-gray-50 mt-2" style={{ fontFamily: '"Space Mono", monospace' }}>
                 {Math.round(analytics.mean_time_to_detect / 1000)}s
               </p>
             </div>
-            <Clock className="h-12 w-12 text-green-500" />
+            <Clock className="h-12 w-12 text-emerald-400" />
           </div>
         </div>
 
         <div className="card">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">False Positive Rate</p>
-              <p className="text-3xl font-bold text-gray-900 mt-2">
+              <p className="text-sm text-gray-400">False Positive Rate</p>
+              <p className="text-3xl font-semibold text-gray-50 mt-2" style={{ fontFamily: '"Space Mono", monospace' }}>
                 {(analytics.false_positive_rate * 100).toFixed(1)}%
               </p>
             </div>
-            <XCircle className="h-12 w-12 text-red-500" />
+            <XCircle className="h-12 w-12 text-red-400" />
           </div>
         </div>
       </div>
 
       {/* Anomaly Score Stats */}
       <div className="card">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">Anomaly Score Statistics</h2>
+        <h2 className="text-xl font-semibold text-gray-50 mb-4">Anomaly Score Statistics</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div>
-            <p className="text-sm text-gray-600">Count</p>
-            <p className="text-2xl font-bold text-gray-900">{analytics.anomaly_score_stats.count}</p>
+            <p className="text-sm text-gray-400">Count</p>
+            <p className="text-2xl font-semibold text-gray-50" style={{ fontFamily: '"Space Mono", monospace' }}>{analytics.anomaly_score_stats.count}</p>
           </div>
           <div>
-            <p className="text-sm text-gray-600">Mean Score</p>
-            <p className="text-2xl font-bold text-gray-900">
+            <p className="text-sm text-gray-400">Mean Score</p>
+            <p className="text-2xl font-semibold text-gray-50" style={{ fontFamily: '"Space Mono", monospace' }}>
               {analytics.anomaly_score_stats.mean_score.toFixed(2)}
             </p>
           </div>
           <div>
-            <p className="text-sm text-gray-600">Min Score</p>
-            <p className="text-2xl font-bold text-gray-900">
+            <p className="text-sm text-gray-400">Min Score</p>
+            <p className="text-2xl font-semibold text-gray-50" style={{ fontFamily: '"Space Mono", monospace' }}>
               {analytics.anomaly_score_stats.min_score.toFixed(2)}
             </p>
           </div>
           <div>
-            <p className="text-sm text-gray-600">Max Score</p>
-            <p className="text-2xl font-bold text-gray-900">
+            <p className="text-sm text-gray-400">Max Score</p>
+            <p className="text-2xl font-semibold text-gray-50" style={{ fontFamily: '"Space Mono", monospace' }}>
               {analytics.anomaly_score_stats.max_score.toFixed(2)}
             </p>
           </div>
@@ -139,15 +139,15 @@ const Analytics = ({ role }: AnalyticsProps) => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Alert Trend */}
         <div className="card">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Alert Trend (7 Days)</h2>
+          <h2 className="text-xl font-semibold text-gray-50 mb-4">Alert Trend (7 Days)</h2>
           {alertTrendData.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>
               <LineChart data={alertTrendData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                <XAxis dataKey="date" stroke="#9CA3AF" />
+                <YAxis stroke="#9CA3AF" />
+                <Tooltip contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151', color: '#F3F4F6' }} />
+                <Legend wrapperStyle={{ color: '#F3F4F6' }} />
                 <Line type="monotone" dataKey="alerts" stroke="#0ea5e9" name="Alerts" />
               </LineChart>
             </ResponsiveContainer>
@@ -158,7 +158,7 @@ const Analytics = ({ role }: AnalyticsProps) => {
 
         {/* Severity Distribution */}
         <div className="card">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Severity Distribution</h2>
+          <h2 className="text-xl font-semibold text-gray-50 mb-4">Severity Distribution</h2>
           {severityData.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
@@ -176,7 +176,7 @@ const Analytics = ({ role }: AnalyticsProps) => {
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151', color: '#F3F4F6' }} />
               </PieChart>
             </ResponsiveContainer>
           ) : (
@@ -188,44 +188,44 @@ const Analytics = ({ role }: AnalyticsProps) => {
       {/* RCA & CAPA Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="card">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">RCA Closure Rate</h2>
+          <h2 className="text-xl font-semibold text-gray-50 mb-4">RCA Closure Rate</h2>
           <div className="space-y-4">
             <div>
               <div className="flex justify-between text-sm mb-2">
-                <span className="text-gray-600">Total RCA</span>
-                <span className="font-medium">{analytics.rca_closure_rate.total_rca}</span>
+                <span className="text-gray-400">Total RCA</span>
+                <span className="font-medium text-gray-50" style={{ fontFamily: '"Space Mono", monospace' }}>{analytics.rca_closure_rate.total_rca}</span>
               </div>
               <div className="flex justify-between text-sm mb-2">
-                <span className="text-gray-600">Closed RCA</span>
-                <span className="font-medium text-green-600">{analytics.rca_closure_rate.closed_rca}</span>
+                <span className="text-gray-400">Closed RCA</span>
+                <span className="font-medium text-emerald-400" style={{ fontFamily: '"Space Mono", monospace' }}>{analytics.rca_closure_rate.closed_rca}</span>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-2.5">
+              <div className="w-full bg-gray-800 rounded-full h-2.5">
                 <div
-                  className="bg-green-600 h-2.5 rounded-full"
+                  className="bg-emerald-500 h-2.5 rounded-full"
                   style={{ width: `${analytics.rca_closure_rate.closure_rate * 100}%` }}
                 />
               </div>
-              <p className="text-sm text-gray-600 mt-2">
-                Closure Rate: {(analytics.rca_closure_rate.closure_rate * 100).toFixed(1)}%
+              <p className="text-sm text-gray-400 mt-2">
+                Closure Rate: <span style={{ fontFamily: '"Space Mono", monospace' }}>{(analytics.rca_closure_rate.closure_rate * 100).toFixed(1)}%</span>
               </p>
             </div>
           </div>
         </div>
 
         <div className="card">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Overdue CAPA</h2>
+          <h2 className="text-xl font-semibold text-gray-50 mb-4">Overdue CAPA</h2>
           {analytics.overdue_capa.length > 0 ? (
             <div className="space-y-2">
               {analytics.overdue_capa.slice(0, 5).map((capa) => (
-                <div key={capa.capa_id} className="p-3 bg-red-50 rounded-lg border border-red-200">
-                  <p className="font-medium text-gray-900">CAPA #{capa.capa_id.slice(-8)}</p>
-                  <p className="text-sm text-gray-600">{capa.description}</p>
+                <div key={capa.capa_id} className="p-3 bg-red-500/10 rounded-lg border border-red-500/20">
+                  <p className="font-medium text-gray-50">CAPA #{capa.capa_id.slice(-8)}</p>
+                  <p className="text-sm text-gray-400">{capa.description}</p>
                 </div>
               ))}
             </div>
           ) : (
             <div className="text-center py-8 text-gray-500">
-              <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-2" />
+              <CheckCircle className="h-12 w-12 text-emerald-400 mx-auto mb-2" />
               <p>No overdue CAPA items</p>
             </div>
           )}

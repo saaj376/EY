@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { AlertTriangle, CheckCircle, XCircle, Clock, Stethoscope, ArrowRight } from 'lucide-react';
 import { UserRole } from '../types';
