@@ -1,71 +1,37 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Car, LogIn, User, Building2, Shield, BarChart3 } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
+import { Car, User, Building2, Shield, BarChart3, Lock, Mail } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { UserRole } from '../types';
+import { authApi } from '../services/api';
+import { GoogleLogin } from '@react-oauth/google';
 
 const Login = () => {
-  const [selectedRole, setSelectedRole] = useState<UserRole>(UserRole.CUSTOMER);
-  const [userId, setUserId] = useState('');
-  const [serviceCentreId, setServiceCentreId] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const roleInfo = {
-    [UserRole.CUSTOMER]: {
-      label: 'Customer',
-      icon: User,
-      description: 'View your vehicles, alerts, and service bookings',
-      placeholder: 'Enter your User ID (e.g., user123)',
-    },
-    [UserRole.SERVICE_CENTER]: {
-      label: 'Service Center',
-      icon: Building2,
-      description: 'Manage service bookings, job cards, and CAPA items',
-      placeholder: 'Enter your User ID',
-      serviceCentrePlaceholder: 'Enter Service Centre ID (e.g., service001)',
-    },
-    [UserRole.OEM_ADMIN]: {
-      label: 'OEM Admin',
-      icon: Shield,
-      description: 'Full platform access including RCA and analytics',
-      placeholder: 'Enter your User ID',
-    },
-    [UserRole.OEM_ANALYST]: {
-      label: 'OEM Analyst',
-      icon: BarChart3,
-      description: 'Access analytics, telemetry, and RCA management',
-      placeholder: 'Enter your User ID',
-    },
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setLoading(true);
 
-    if (!userId.trim()) {
-      setError('Please enter a User ID');
-      return;
+    try {
+      const response = await authApi.login({ email, password });
+      if (response.data.status === 'success') {
+        const { user } = response.data;
+        login(user.role, user.id); // Service centre ID logic might need adjustment if it's not in user object
+        navigate('/dashboard');
+      }
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Login failed');
+    } finally {
+      setLoading(false);
     }
-
-    if (selectedRole === UserRole.SERVICE_CENTER && !serviceCentreId.trim()) {
-      setError('Please enter a Service Centre ID');
-      return;
-    }
-
-    // Login with the provided credentials
-    login(
-      selectedRole,
-      userId.trim(),
-      selectedRole === UserRole.SERVICE_CENTER ? serviceCentreId.trim() : undefined
-    );
-
-    // Redirect to dashboard
-    navigate('/dashboard');
   };
-
-  const currentRoleInfo = roleInfo[selectedRole];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-primary-100 flex items-center justify-center p-4">
@@ -86,89 +52,48 @@ const Login = () => {
         {/* Login Card */}
         <div className="bg-white rounded-2xl shadow-xl p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Role Selection */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">
-                Select Your Role
-              </label>
-              <div className="grid grid-cols-2 gap-3">
-                {Object.entries(roleInfo).map(([role, info]) => {
-                  const Icon = info.icon;
-                  const isSelected = selectedRole === role;
-                  return (
-                    <button
-                      key={role}
-                      type="button"
-                      onClick={() => {
-                        setSelectedRole(role as UserRole);
-                        setError('');
-                      }}
-                      className={`p-4 rounded-lg border-2 transition-all ${
-                        isSelected
-                          ? 'border-primary-600 bg-primary-50 shadow-md'
-                          : 'border-gray-200 hover:border-gray-300 bg-white'
-                      }`}
-                    >
-                      <Icon className={`h-6 w-6 mx-auto mb-2 ${
-                        isSelected ? 'text-primary-600' : 'text-gray-400'
-                      }`} />
-                      <p className={`text-sm font-medium ${
-                        isSelected ? 'text-primary-700' : 'text-gray-700'
-                      }`}>
-                        {info.label}
-                      </p>
-                    </button>
-                  );
-                })}
-              </div>
-              <p className="text-xs text-gray-500 mt-2 text-center">
-                {currentRoleInfo.description}
-              </p>
-            </div>
 
-            {/* User ID Input */}
+            {/* Email Input */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                User ID
+                Email Address
               </label>
               <div className="relative">
-                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                 <input
-                  type="text"
-                  value={userId}
+                  type="email"
+                  value={email}
                   onChange={(e) => {
-                    setUserId(e.target.value);
+                    setEmail(e.target.value);
                     setError('');
                   }}
-                  placeholder={currentRoleInfo.placeholder}
-                  className="input pl-10"
+                  placeholder="Enter your email"
+                  className="input pl-10 w-full border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                   required
                 />
               </div>
             </div>
 
-            {/* Service Centre ID (only for Service Center role) */}
-            {selectedRole === UserRole.SERVICE_CENTER && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Service Centre ID
-                </label>
-                <div className="relative">
-                  <Building2 className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                  <input
-                    type="text"
-                    value={serviceCentreId}
-                    onChange={(e) => {
-                      setServiceCentreId(e.target.value);
-                      setError('');
-                    }}
-                    placeholder={currentRoleInfo.serviceCentrePlaceholder}
-                    className="input pl-10"
-                    required
-                  />
-                </div>
+            {/* Password Input */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Password
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    setError('');
+                  }}
+                  placeholder="Enter your password"
+                  className="input pl-10 w-full border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                  required
+                />
               </div>
-            )}
+            </div>
 
             {/* Error Message */}
             {error && (
@@ -178,22 +103,56 @@ const Login = () => {
             )}
 
             {/* Submit Button */}
-            <button
-              type="submit"
-              className="w-full btn-primary flex items-center justify-center space-x-2 py-3 text-lg"
-            >
-              <LogIn className="h-5 w-5" />
-              <span>Sign In</span>
-            </button>
-          </form>
+            <div>
+              <button
+                type="submit"
+                disabled={loading}
+                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+              >
+                {loading ? 'Signing in...' : 'Sign in'}
+              </button>
+            </div>
 
-          {/* Demo Credentials Hint */}
-          <div className="mt-6 pt-6 border-t border-gray-200">
-            <p className="text-xs text-gray-500 text-center">
-              <strong>Demo Mode:</strong> Enter any User ID to continue. 
-              For Service Center, also enter a Service Centre ID.
-            </p>
-          </div>
+            <div className="text-center">
+              <p className="text-sm text-gray-500">
+                Don't have an account?{' '}
+                <Link to="/signup" className="font-medium text-blue-600 hover:text-blue-500">
+                  Sign up
+                </Link>
+              </p>
+            </div>
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-gray-500">Or continue with</span>
+              </div>
+            </div>
+
+            <div className="flex justify-center">
+              <GoogleLogin
+                onSuccess={async (credentialResponse) => {
+                  try {
+                    if (credentialResponse.credential) {
+                      const response = await authApi.googleLogin(credentialResponse.credential);
+                      if (response.data.status === 'success') {
+                        const { user } = response.data;
+                        login(user.role, user.id);
+                        navigate('/dashboard');
+                      }
+                    }
+                  } catch (err) {
+                    setError('Google login failed');
+                  }
+                }}
+                onError={() => {
+                  setError('Google login failed');
+                }}
+                useOneTap
+              />
+            </div>
+          </form>
         </div>
 
         {/* Footer */}

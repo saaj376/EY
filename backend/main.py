@@ -8,6 +8,7 @@ from oem import router as oem_router
 from logs import router as logs_router
 from telemetry_ws import router as telemetry_ws_router
 from voice_agent import router as voice_router
+from auth_routes import router as auth_router
 import threading
 
 from telemetry import router as telemetry_router
@@ -39,7 +40,17 @@ app.add_middleware(
         "http://localhost:3000", 
         "http://127.0.0.1:3000",
         "http://localhost:5173",  # Vite default
-        "http://127.0.0.1:5173"
+        "http://127.0.0.1:5173",
+        "http://localhost:3001",
+        "http://127.0.0.1:3001",
+        "http://localhost:3002",
+        "http://127.0.0.1:3002",
+        "http://localhost:3003",
+        "http://127.0.0.1:3003",
+        "http://localhost:3004",
+        "http://127.0.0.1:3004",
+        "http://localhost:3005",
+        "http://127.0.0.1:3005"
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -53,6 +64,7 @@ app.include_router(logs_router)
 app.middleware("http")(ueba_middleware)
 app.include_router(telemetry_ws_router)
 app.include_router(voice_router)
+app.include_router(auth_router)
 # ----------------------------
 # ROUTERS
 # ----------------------------

@@ -27,6 +27,17 @@ export const setAuthRole = (role: UserRole) => {
   api.defaults.headers.common['X-Role'] = role;
 };
 
+export const authApi = {
+  signup: (data: { name: string; email: string; password: string }) =>
+    api.post('/auth/signup', data),
+
+  login: (data: { email: string; password: string }) =>
+    api.post('/auth/login', data),
+
+  googleLogin: (token: string) =>
+    api.post('/auth/login/google', { token }),
+};
+
 // Telemetry
 export const telemetryApi = {
   ingest: (data: Telemetry, role: UserRole) =>
