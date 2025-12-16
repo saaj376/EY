@@ -10,6 +10,8 @@ import {
   Wrench
 } from 'lucide-react';
 import { UserRole } from '../types';
+import type { Vehicle, Alert, Booking } from '../types';
+import { userApi, serviceApi } from '../services/api';
 import CustomerDashboard from '../components/dashboard/CustomerDashboard';
 import ServiceDashboard from '../components/dashboard/ServiceDashboard';
 import OEMDashboard from '../components/dashboard/OEMDashboard';
@@ -63,6 +65,10 @@ const Dashboard = ({ role, userId, serviceCentreId }: DashboardProps) => {
   if (role === UserRole.SERVICE_CENTER) {
     return <ServiceDashboard serviceCentreId={serviceCentreId} />;
   }
+
+  const activeAlerts = alerts.filter((a) => !a.resolved);
+  const highSeverityAlerts = activeAlerts.filter((a) => a.severity === 'HIGH');
+  const upcomingBookings = bookings.filter((b) => b.status === 'CONFIRMED').slice(0, 5);
 
   return (
     <div className="space-y-8">

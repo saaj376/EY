@@ -4,7 +4,6 @@ import {
   Activity,
   Gauge,
   Thermometer,
-  Battery,
   Fuel,
   MapPin,
 } from "lucide-react";
@@ -38,9 +37,7 @@ export default function TelemetryPage({ role, userId }: Props) {
   const [selectedVehicle, setSelectedVehicle] = useState(vehicleId || "");
   const [liveTelemetry, setLiveTelemetry] = useState<Telemetry | null>(null);
   const [history, setHistory] = useState<Telemetry[]>([]);
-  const [connected, setConnected] = useState(false);
-  const [simulatorRunning, setSimulatorRunning] = useState(false);
-  const [simulatorLoading, setSimulatorLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const isAdvancedUser = role !== UserRole.CUSTOMER;
 
@@ -54,35 +51,14 @@ export default function TelemetryPage({ role, userId }: Props) {
         setSelectedVehicle(res.data[0].vin);
       }
     });
-  }, [role, userId]);
+  }, [role, userId, selectedVehicle]);
 
   // -------------------- Telemetry --------------------
   useEffect(() => {
     if (!selectedVehicle) return;
 
-    // Close existing connection
-    if (wsRef.current) {
-      wsRef.current.close();
-    }
-
-
-
-    // Construct WS URL
-    const wsProtocol = API_BASE_URL.startsWith('https') ? 'wss' : 'ws';
-    const wsHost = API_BASE_URL.replace(/^https?:\/\//, '');
-    const wsUrl = `${wsProtocol}://${wsHost}/ws/telemetry/${selectedVehicle}?user_id=${userId}`;
-
-    console.log("Connecting to WS:", wsUrl);
-    const ws = new WebSocket(wsUrl);
-    wsRef.current = ws;
-
-    ws.onopen = () => {
-      console.log("WS Connected");
-      setConnected(true);
-
-    };
-
-    ws.onmessage = (event) => {
+    const fetchTelemetry = async () => {
+      setLoading(true);
       try {
         const [liveRes, historyRes] = await Promise.all([
           telemetryApi.getLive(selectedVehicle, role).catch(() => null),
