@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Calendar, Wrench } from 'lucide-react';
+import { Calendar, Wrench, Edit2, MapPin, AlertTriangle, Activity } from 'lucide-react';
 import { UserRole } from '../types';
-import { userApi, serviceApi, serviceWorkflowApi } from '../services/api';
-import type { Booking, JobCard, Invoice, DashboardStats } from '../types';
+import { userApi, serviceApi, serviceWorkflowApi, telemetryApi } from '../services/api';
+import type { Booking, JobCard, Invoice, DashboardStats, Telemetry, Alert } from '../types';
 import { format } from 'date-fns';
 
 interface ServiceBookingProps {
@@ -21,12 +21,35 @@ const ServiceBooking = ({ role, userId, serviceCentreId }: ServiceBookingProps) 
 
   const [loading, setLoading] = useState(true);
   const [showBookingForm, setShowBookingForm] = useState(false);
+
+  // Slot Booking State
   const [newBooking, setNewBooking] = useState({
     vehicle_id: '',
-    service_centre_id: serviceCentreId,
+    service_centre_id: serviceCentreId || '', // Default to props or empty
     slot_start: '',
     slot_end: '',
   });
+  const [selectedDate, setSelectedDate] = useState<string>('');
+  const [availableSlots, setAvailableSlots] = useState<any[]>([]);
+  const [loadingSlots, setLoadingSlots] = useState(false);
+
+  // Service Centre Selection State
+  const [serviceCentres, setServiceCentres] = useState<any[]>([]);
+  const [loadingCentres, setLoadingCentres] = useState(false);
+
+  // Job Management State
+  const [editingJob, setEditingJob] = useState<JobCard | null>(null);
+  const [jobUpdate, setJobUpdate] = useState({
+    status: '',
+    technician: '',
+    notes: '',
+  });
+
+  // Telemetry Modal State
+  const [viewingVehicle, setViewingVehicle] = useState<{ vehicleId: string, risk?: string } | null>(null);
+  const [vehicleTelemetry, setVehicleTelemetry] = useState<Telemetry | null>(null);
+  const [_vehicleAlerts, _setVehicleAlerts] = useState<Alert[]>([]);
+  const [loadingTelemetry, setLoadingTelemetry] = useState(false);
 
   // Calculate stats for customer view since they don't get the backend stats endpoint
   const customerStats = role === UserRole.CUSTOMER ? {
@@ -71,18 +94,94 @@ const ServiceBooking = ({ role, userId, serviceCentreId }: ServiceBookingProps) 
     fetchData();
   }, [role, userId, serviceCentreId]);
 
+  // Fetch Service Centres when opening modal (for Customer)
+  useEffect(() => {
+    if (showBookingForm && role === UserRole.CUSTOMER) {
+      const fetchCentres = async () => {
+        setLoadingCentres(true);
+        try {
+          const res = await serviceApi.getServiceCentres(role);
+          setServiceCentres(res.data);
+        } catch (error) {
+          console.error('Error fetching service centres:', error);
+        } finally {
+          setLoadingCentres(false);
+        }
+      };
+      fetchCentres();
+    }
+  }, [showBookingForm, role]);
+
+  // Fetch slots when date changes (and centre is selected)
+  useEffect(() => {
+    // Determine which ID to use: selected in form (Customer) or props (Service Center)
+    const targetCentreId = role === UserRole.CUSTOMER ? newBooking.service_centre_id : serviceCentreId;
+
+    if (showBookingForm && selectedDate && targetCentreId) {
+      const fetchSlots = async () => {
+        setLoadingSlots(true);
+        try {
+          const response = await serviceApi.getServiceCentreSlots(targetCentreId, selectedDate, role);
+          setAvailableSlots(response.data.slots);
+        } catch (error) {
+          console.error('Error fetching slots:', error);
+        } finally {
+          setLoadingSlots(false);
+        }
+      };
+      fetchSlots();
+    }
+  }, [showBookingForm, selectedDate, newBooking.service_centre_id, serviceCentreId, role]);
+
+  // Fetch Telemetry when viewing vehicle
+  useEffect(() => {
+    if (viewingVehicle) {
+      const fetchTelemetry = async () => {
+        setLoadingTelemetry(true);
+        try {
+          // In a real app, we might check live or history. Fetching live for now.
+          const telemRes = await telemetryApi.getLive(viewingVehicle.vehicleId, role);
+          setVehicleTelemetry(telemRes.data);
+
+          // Also fetch alerts for this vehicle context if possible, 
+          // reusing serviceApi.getAlerts but that takes centre_id. 
+          // For now, let's assume we show what's available or leave alerts empty if no endpoint.
+          // Or we use userApi.getAlerts if we had the user ID, but we might not for generic vehicle.
+          // Let's rely on telemetry data first.
+        } catch (error) {
+          console.error('Error fetching vehicle telemetry:', error);
+        } finally {
+          setLoadingTelemetry(false);
+        }
+      };
+      fetchTelemetry();
+    }
+  }, [viewingVehicle, role]);
+
+
   const handleCreateBooking = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!newBooking.slot_start) {
+      alert('Please select a time slot.');
+      return;
+    }
+    const targetCentreId = role === UserRole.CUSTOMER ? newBooking.service_centre_id : serviceCentreId;
+    if (!targetCentreId) {
+      alert('Please select a service centre.');
+      return;
+    }
+
     try {
       await serviceWorkflowApi.createBooking({
         ...newBooking,
+        service_centre_id: targetCentreId,
         user_id: userId,
         role,
       });
       setShowBookingForm(false);
       setNewBooking({
         vehicle_id: '',
-        service_centre_id: serviceCentreId,
+        service_centre_id: role === UserRole.SERVICE_CENTER ? serviceCentreId : '', // Reset correctly
         slot_start: '',
         slot_end: '',
       });
@@ -93,11 +192,41 @@ const ServiceBooking = ({ role, userId, serviceCentreId }: ServiceBookingProps) 
     }
   };
 
+  const handleOpenJobParams = (job: JobCard) => {
+    setEditingJob(job);
+    setJobUpdate({
+      status: job.status || 'OPEN',
+      technician: job.assigned_technician || '',
+      notes: job.technician_notes || '',
+    });
+  };
+
+  const handleUpdateJob = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingJob) return;
+
+    try {
+      await serviceWorkflowApi.updateJobStatus(editingJob.job_card_id, {
+        status: jobUpdate.status,
+        notes: jobUpdate.notes,
+        technician: jobUpdate.technician,
+        role,
+      });
+      alert('Job updated successfully');
+      setEditingJob(null);
+      window.location.reload();
+    } catch (error) {
+      console.error('Error updating job:', error);
+      alert('Failed to update job');
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'CONFIRMED':
       case 'PAID':
       case 'COMPLETED':
+      case 'WORK_COMPLETED':
         return 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20';
       case 'CANCELLED':
         return 'bg-red-500/10 text-red-300 border-red-500/20';
@@ -207,10 +336,10 @@ const ServiceBooking = ({ role, userId, serviceCentreId }: ServiceBookingProps) 
 
       {/* Content */}
       <div className="space-y-6">
-        {/* Booking Form Overlay */}
+        {/* Booking Form Overlay (Slot Based) */}
         {showBookingForm && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-gray-900 border border-gray-700 rounded-xl p-6 w-full max-w-lg shadow-2xl">
+            <div className="bg-gray-900 border border-gray-700 rounded-xl p-6 w-full max-w-2xl shadow-2xl overflow-y-auto max-h-[90vh]">
               <h2 className="text-xl font-semibold text-gray-50 mb-4">Create New Booking</h2>
               <form onSubmit={handleCreateBooking} className="space-y-4">
                 <div>
@@ -220,31 +349,109 @@ const ServiceBooking = ({ role, userId, serviceCentreId }: ServiceBookingProps) 
                     value={newBooking.vehicle_id}
                     onChange={(e) => setNewBooking({ ...newBooking, vehicle_id: e.target.value })}
                     className="w-full px-4 py-2 border border-gray-700 rounded-lg bg-gray-950 text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none"
+                    placeholder="Enter Vehicle VIN/ID"
                     required
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+
+                {/* Service Centre Selection (Customer only) */}
+                {role === UserRole.CUSTOMER && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">Slot Start</label>
-                    <input
-                      type="datetime-local"
-                      value={newBooking.slot_start}
-                      onChange={(e) => setNewBooking({ ...newBooking, slot_start: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-700 rounded-lg bg-gray-950 text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none"
-                      required
-                    />
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Select Service Centre</label>
+                    {loadingCentres ? (
+                      <div className="text-sm text-gray-500">Loading service centres...</div>
+                    ) : (
+                      <div className="grid grid-cols-1 gap-2 max-h-40 overflow-y-auto">
+                        {serviceCentres.map((centre: any) => (
+                          <button
+                            key={centre._id}
+                            type="button"
+                            onClick={() => setNewBooking({ ...newBooking, service_centre_id: centre._id })}
+                            className={`p-3 rounded-lg border text-left transition-colors flex justify-between items-center ${newBooking.service_centre_id === centre._id
+                              ? 'bg-blue-500/20 border-blue-500 text-blue-300 ring-1 ring-blue-500'
+                              : 'bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-750'
+                              }`}
+                          >
+                            <div>
+                              <div className="font-medium">{centre.name}</div>
+                              <div className="text-xs text-gray-500 flex items-center mt-1">
+                                <MapPin className="h-3 w-3 mr-1" /> {centre.location}
+                              </div>
+                            </div>
+                            {newBooking.service_centre_id === centre._id && (
+                              <div className="text-blue-500 text-xs font-bold">SELECTED</div>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">Slot End</label>
-                    <input
-                      type="datetime-local"
-                      value={newBooking.slot_end}
-                      onChange={(e) => setNewBooking({ ...newBooking, slot_end: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-700 rounded-lg bg-gray-950 text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none"
-                      required
-                    />
-                  </div>
+                )}
+
+                {/* Date Selection */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Select Date</label>
+                  <input
+                    type="date"
+                    value={selectedDate}
+                    onChange={(e) => setSelectedDate(e.target.value)}
+                    min={new Date().toISOString().split('T')[0]}
+                    className="w-full px-4 py-2 border border-gray-700 rounded-lg bg-gray-950 text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none"
+                    required
+                    disabled={role === UserRole.CUSTOMER && !newBooking.service_centre_id}
+                  />
                 </div>
+
+                {/* Slots Grid */}
+                {selectedDate && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Available Time Slots</label>
+                    {loadingSlots ? (
+                      <div className="text-center py-4 text-gray-500">Loading slots...</div>
+                    ) : availableSlots.length === 0 ? (
+                      <div className="text-center py-4 text-gray-500">No slots available for this date.</div>
+                    ) : (
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        {availableSlots.map((slot, idx) => {
+                          const isSelected = newBooking.slot_start === slot.start;
+                          const isAvailable = slot.is_available;
+
+                          return (
+                            <button
+                              key={idx}
+                              type="button"
+                              disabled={!isAvailable}
+                              onClick={() => setNewBooking({
+                                ...newBooking,
+                                slot_start: slot.start,
+                                slot_end: slot.end
+                              })}
+                              className={`p-3 rounded-lg border text-sm font-medium transition-colors ${isSelected
+                                ? 'bg-blue-500/20 border-blue-500 text-blue-300 ring-2 ring-blue-500/50'
+                                : !isAvailable
+                                  ? 'bg-gray-800/50 border-gray-700 text-gray-500 cursor-not-allowed opacity-60'
+                                  : 'bg-gray-800 border-gray-700 text-gray-300 hover:border-gray-500 hover:bg-gray-700'
+                                }`}
+                            >
+                              {format(new Date(slot.start), 'HH:mm')} - {format(new Date(slot.end), 'HH:mm')}
+                              <div className="text-xs mt-1 font-normal opacity-70">
+                                {isAvailable ? `${slot.available_slots} slots left` : 'Full'}
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Selected Slot Confirmation */}
+                {newBooking.slot_start && (
+                  <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg text-sm text-blue-300">
+                    Selected: {format(new Date(newBooking.slot_start), 'MMM dd, yyyy HH:mm')}
+                  </div>
+                )}
+
                 <div className="flex justify-end space-x-3 mt-6">
                   <button
                     type="button"
@@ -256,11 +463,136 @@ const ServiceBooking = ({ role, userId, serviceCentreId }: ServiceBookingProps) 
                   <button
                     type="submit"
                     className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors font-medium"
+                    disabled={!newBooking.slot_start}
                   >
-                    Create Booking
+                    Confirm Booking
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* Edit Job Modal */}
+        {editingJob && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-gray-900 border border-gray-700 rounded-xl p-6 w-full max-w-lg shadow-2xl">
+              <h2 className="text-xl font-semibold text-gray-50 mb-4">Manage Job Card</h2>
+              <form onSubmit={handleUpdateJob} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Status</label>
+                  <select
+                    value={jobUpdate.status}
+                    onChange={(e) => setJobUpdate({ ...jobUpdate, status: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-700 rounded-lg bg-gray-900 text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none"
+                  >
+                    <option value="OPEN">Open</option>
+                    <option value="IN_PROGRESS">In Progress</option>
+                    <option value="WORK_COMPLETED">Work Completed</option>
+                    <option value="COMPLETED">Closed / Completed</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Assigned Technician</label>
+                  <input
+                    type="text"
+                    value={jobUpdate.technician}
+                    onChange={(e) => setJobUpdate({ ...jobUpdate, technician: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-700 rounded-lg bg-gray-900 text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none"
+                    placeholder="Enter technician name"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Technician Notes</label>
+                  <textarea
+                    value={jobUpdate.notes}
+                    onChange={(e) => setJobUpdate({ ...jobUpdate, notes: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-700 rounded-lg bg-gray-900 text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none"
+                    rows={4}
+                    placeholder="Update job progress or notes..."
+                  />
+                </div>
+                <div className="flex justify-end space-x-3 mt-6">
+                  <button
+                    type="button"
+                    onClick={() => setEditingJob(null)}
+                    className="px-4 py-2 rounded-lg text-gray-300 hover:text-white hover:bg-gray-800 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors font-medium"
+                  >
+                    Update Job
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Vehicle Telemetry Modal */}
+        {viewingVehicle && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-gray-900 border border-gray-700 rounded-xl p-6 w-full max-w-2xl shadow-2xl">
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-50">Vehicle Telemetry</h2>
+                  <p className="text-gray-400 text-sm mt-1">Vehicle ID: {viewingVehicle.vehicleId}</p>
+                </div>
+                <button
+                  onClick={() => setViewingVehicle(null)}
+                  className="text-gray-400 hover:text-white"
+                >
+                  Close
+                </button>
+              </div>
+
+              {loadingTelemetry ? (
+                <div className="text-center py-8 text-gray-400">Loading live telemetry...</div>
+              ) : vehicleTelemetry ? (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <div className="p-4 bg-gray-800 rounded-lg border border-gray-700">
+                      <div className="text-gray-400 text-xs mb-1">Speed</div>
+                      <div className="text-xl font-mono text-blue-300">{(vehicleTelemetry as any).speed || (vehicleTelemetry as any).speed_kmh || 0} km/h</div>
+                    </div>
+                    <div className="p-4 bg-gray-800 rounded-lg border border-gray-700">
+                      <div className="text-gray-400 text-xs mb-1">RPM</div>
+                      <div className="text-xl font-mono text-purple-300">{vehicleTelemetry.rpm}</div>
+                    </div>
+                    <div className="p-4 bg-gray-800 rounded-lg border border-gray-700">
+                      <div className="text-gray-400 text-xs mb-1">Engine Temp</div>
+                      <div className="text-xl font-mono text-orange-300">{(vehicleTelemetry as any).engine_temp || (vehicleTelemetry as any).engine_temp_c || 0}°C</div>
+                    </div>
+                    <div className="p-4 bg-gray-800 rounded-lg border border-gray-700">
+                      <div className="text-gray-400 text-xs mb-1">Fuel Level</div>
+                      <div className="text-xl font-mono text-emerald-300">{(vehicleTelemetry as any).fuel_level || (vehicleTelemetry as any).fuel_level_percent || 0}%</div>
+                    </div>
+                    <div className="p-4 bg-gray-800 rounded-lg border border-gray-700">
+                      <div className="text-gray-400 text-xs mb-1">Battery</div>
+                      <div className="text-xl font-mono text-yellow-300">{(vehicleTelemetry as any).battery_voltage || (vehicleTelemetry as any).battery_voltage_v || 0}V</div>
+                    </div>
+                  </div>
+
+                  {/* Alerts / Risks */}
+                  <div className="pt-4 border-t border-gray-800">
+                    <h3 className="text-sm font-semibold text-gray-300 mb-3 flex items-center">
+                      <AlertTriangle className="h-4 w-4 mr-2 text-red-400" />
+                      Active Risks & Alerts
+                    </h3>
+                    {/* Placeholder for alerts as we don't have a direct endpoint in this context yet */}
+                    <div className="text-sm text-gray-500 italic">
+                      No active critical alerts detected for this session.
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  No telemetry data available for this vehicle.
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -295,13 +627,25 @@ const ServiceBooking = ({ role, userId, serviceCentreId }: ServiceBookingProps) 
                           </div>
                         )}
                       </div>
-                      <div className="text-right text-sm">
-                        <div className="text-gray-300">
-                          {booking.slot_start ? format(new Date(booking.slot_start), 'MMM dd, HH:mm') : 'N/A'}
+                      <div className="flex flex-col items-end gap-2">
+                        <div className="text-right text-sm">
+                          <div className="text-gray-300">
+                            {booking.slot_start ? format(new Date(booking.slot_start), 'MMM dd, HH:mm') : 'N/A'}
+                          </div>
+                          <div className="text-gray-500 text-xs mt-1">
+                            to {booking.slot_end ? format(new Date(booking.slot_end), 'HH:mm') : 'N/A'}
+                          </div>
                         </div>
-                        <div className="text-gray-500 text-xs mt-1">
-                          to {booking.slot_end ? format(new Date(booking.slot_end), 'HH:mm') : 'N/A'}
-                        </div>
+                        {/* View Telemetry Button for Service Center */}
+                        {role === UserRole.SERVICE_CENTER && (
+                          <button
+                            onClick={() => setViewingVehicle({ vehicleId: booking.vehicle_id })}
+                            className="flex items-center space-x-1 text-xs text-blue-400 hover:text-blue-300 px-2 py-1"
+                          >
+                            <Activity className="h-3 w-3" />
+                            <span>View Telemetry</span>
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -340,11 +684,35 @@ const ServiceBooking = ({ role, userId, serviceCentreId }: ServiceBookingProps) 
                           </div>
                         )}
                       </div>
-                      {job.work_timeline && job.work_timeline.length > 0 && (
-                        <div className="text-right text-xs text-gray-500 max-w-xs">
-                          Latest: {job.work_timeline[job.work_timeline.length - 1].notes}
+                      <div className="flex flex-col items-end gap-2">
+                        <div className="flex space-x-2">
+                          {role === UserRole.SERVICE_CENTER && (
+                            <>
+                              <button
+                                onClick={() => setViewingVehicle({ vehicleId: job.vehicle_id || '' })}
+                                className="flex items-center space-x-1 text-xs bg-gray-800 hover:bg-gray-700 text-blue-400 px-3 py-1.5 rounded transition-colors"
+                              >
+                                <Activity className="h-3 w-3" />
+                                <span>Telemetry</span>
+                              </button>
+
+                              <button
+                                onClick={() => handleOpenJobParams(job)}
+                                className="flex items-center space-x-1 text-xs bg-gray-800 hover:bg-gray-700 text-blue-400 px-3 py-1.5 rounded transition-colors"
+                              >
+                                <Edit2 className="h-3 w-3" />
+                                <span>Manage</span>
+                              </button>
+                            </>
+                          )}
                         </div>
-                      )}
+
+                        {job.work_timeline && job.work_timeline.length > 0 && (
+                          <div className="text-right text-xs text-gray-500 max-w-xs">
+                            Latest: {job.work_timeline[job.work_timeline.length - 1].notes}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 );

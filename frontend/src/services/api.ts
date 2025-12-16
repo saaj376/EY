@@ -68,6 +68,9 @@ export const serviceApi = {
   getDashboardStats: (serviceCentreId: string, role: UserRole) =>
     api.get<DashboardStats>(`/service/dashboard/stats?service_centre_id=${serviceCentreId}`, { headers: { 'X-Role': role } }),
 
+  getServiceCentres: (role: UserRole) =>
+    api.get('/service/centres', { headers: { 'X-Role': role } }),
+
   getBookings: (serviceCentreId: string, role: UserRole) =>
     api.get<Booking[]>(`/service/bookings?service_centre_id=${serviceCentreId}`, { headers: { 'X-Role': role } }),
 

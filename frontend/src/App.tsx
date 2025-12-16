@@ -19,97 +19,97 @@ const AppRoutes = () => {
   // Ensure we have valid values
   const currentRole = role || UserRole.CUSTOMER;
   const currentUserId = userId || 'user123';
-  const currentServiceCentreId = serviceCentreId || 'service001';
+  const currentServiceCentreId = serviceCentreId || '69413b45ef229cf06597b4ae';
 
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
-      <Route 
-        path="/*" 
+      <Route
+        path="/*"
         element={
           isAuthenticated ? (
             <Layout>
               <Routes>
-                <Route 
-                  path="/" 
-                  element={<Navigate to="/dashboard" replace />} 
+                <Route
+                  path="/"
+                  element={<Navigate to="/dashboard" replace />}
                 />
-                <Route 
-                  path="/dashboard" 
+                <Route
+                  path="/dashboard"
                   element={
-                    <Dashboard 
-                      role={currentRole} 
-                      userId={currentUserId} 
-                      serviceCentreId={currentServiceCentreId} 
+                    <Dashboard
+                      role={currentRole}
+                      userId={currentUserId}
+                      serviceCentreId={currentServiceCentreId}
                     />
-                  } 
+                  }
                 />
-                <Route 
-                  path="/vehicles" 
+                <Route
+                  path="/vehicles"
                   element={
                     <ProtectedRoute allowedRoles={[UserRole.CUSTOMER, UserRole.OEM_ADMIN]}>
-                      <Vehicles role={currentRole} userId={currentUserId} /> 
+                      <Vehicles role={currentRole} userId={currentUserId} />
                     </ProtectedRoute>
-                  } 
+                  }
                 />
-                <Route 
-                  path="/alerts" 
+                <Route
+                  path="/alerts"
                   element={
-                    <Alerts 
-                      role={currentRole} 
-                      userId={currentUserId} 
-                      serviceCentreId={currentServiceCentreId} 
-                    /> 
-                  } 
+                    <Alerts
+                      role={currentRole}
+                      userId={currentUserId}
+                      serviceCentreId={currentServiceCentreId}
+                    />
+                  }
                 />
-                <Route 
-                  path="/telemetry/:vehicleId?" 
+                <Route
+                  path="/telemetry/:vehicleId?"
                   element={
-                    <Telemetry role={currentRole} userId={currentUserId} /> 
-                  } 
+                    <Telemetry role={currentRole} userId={currentUserId} />
+                  }
                 />
-                <Route 
-                  path="/service" 
+                <Route
+                  path="/service"
                   element={
                     <ProtectedRoute allowedRoles={[UserRole.CUSTOMER, UserRole.SERVICE_CENTER]}>
-                      <ServiceBooking 
-                        role={currentRole} 
-                        userId={currentUserId} 
-                        serviceCentreId={currentServiceCentreId} 
-                      /> 
+                      <ServiceBooking
+                        role={currentRole}
+                        userId={currentUserId}
+                        serviceCentreId={currentServiceCentreId}
+                      />
                     </ProtectedRoute>
-                  } 
+                  }
                 />
-                <Route 
-                  path="/rca" 
+                <Route
+                  path="/rca"
                   element={
                     <ProtectedRoute allowedRoles={[UserRole.OEM_ADMIN, UserRole.OEM_ANALYST]}>
-                      <RCA role={currentRole} /> 
+                      <RCA role={currentRole} />
                     </ProtectedRoute>
-                  } 
+                  }
                 />
-                <Route 
-                  path="/capa" 
+                <Route
+                  path="/capa"
                   element={
                     <ProtectedRoute allowedRoles={[UserRole.SERVICE_CENTER, UserRole.OEM_ADMIN]}>
-                      <CAPA role={currentRole} serviceCentreId={currentServiceCentreId} /> 
+                      <CAPA role={currentRole} serviceCentreId={currentServiceCentreId} />
                     </ProtectedRoute>
-                  } 
+                  }
                 />
-                <Route 
-                  path="/analytics" 
+                <Route
+                  path="/analytics"
                   element={
                     <ProtectedRoute allowedRoles={[UserRole.OEM_ADMIN, UserRole.OEM_ANALYST]}>
-                      <Analytics role={currentRole} /> 
+                      <Analytics role={currentRole} />
                     </ProtectedRoute>
-                  } 
+                  }
                 />
               </Routes>
             </Layout>
           ) : (
             <Navigate to="/login" replace />
           )
-        } 
+        }
       />
     </Routes>
   );
