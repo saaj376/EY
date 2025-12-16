@@ -224,7 +224,7 @@ def trigger_voice_call(phone_number: str):
         Please take immediate action.
     </Say>
     <Connect>
-        <Stream url="wss://celestial-characterless-jacoby.ngrok-free.dev/twilio"/>
+        <Stream url="wss://staminal-susann-inimitably.ngrok-free.dev/twilio"/>
     </Connect>
 </Response>
 """
