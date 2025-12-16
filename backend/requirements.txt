@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+pymongo
+python-dotenv
+numpy
+scikit-learn
+langgraph
+bcrypt
+pyjwt
+redis
+websockets
+google-auth
+requests
