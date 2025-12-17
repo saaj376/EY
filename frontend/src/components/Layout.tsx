@@ -85,7 +85,7 @@ const Layout = ({ children }: LayoutProps) => {
               </div>
               <div className="flex flex-col">
                 <span className="text-xs uppercase tracking-[0.2em] text-gray-400">
-                  VIP PLATFORM
+                  Autosphere
                 </span>
                 <h1 className="text-sm font-medium text-gray-100">
                   Dashboards / <span className="text-gray-400">Overview</span>

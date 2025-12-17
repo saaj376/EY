@@ -389,3 +389,17 @@ def get_notifications(
         del notif['_id']
     
     return notifications
+
+@router.get('/centres/slots')
+def get_service_centre_slots(
+    service_centre_id: str,
+    date: str,
+    role=Depends(get_current_role)
+):
+    # Allow customers, service centres, and admins to query slots
+    require_roles(role, [UserRole.CUSTOMER, UserRole.SERVICE_CENTER, UserRole.OEM_ADMIN])
+    try:
+        from service import generate_available_slots
+        return generate_available_slots(service_centre_id, date)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))

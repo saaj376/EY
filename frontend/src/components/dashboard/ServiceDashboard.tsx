@@ -38,7 +38,7 @@ const ServiceDashboard = ({ serviceCentreId }: ServiceDashboardProps) => {
         fetchData();
     }, [serviceCentreId]);
 
-    if (loading) return <div className="text-center py-12">Loading...</div>;
+    if (loading) return <div className="text-center py-12 text-gray-300">Loading...</div>;
 
     const todayBookings = bookings.filter(b => {
         const date = new Date(b.slot_start);
@@ -51,61 +51,61 @@ const ServiceDashboard = ({ serviceCentreId }: ServiceDashboardProps) => {
     return (
         <div className="space-y-8">
             <div>
-                <h1 className="text-3xl font-bold text-gray-900">Service Centre Dashboard</h1>
-                <p className="text-gray-600 mt-1">
+                <h1 className="text-3xl font-bold text-gray-50">Service Centre Dashboard</h1>
+                <p className="text-gray-300 mt-1">
                     {todayBookings.length} bookings scheduled for today.
                 </p>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
                 {/* Stats */}
-                <div className="card bg-blue-50 border-blue-100">
+                <div className="card bg-gray-800 border-gray-700">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm text-blue-600 font-medium">Today's Jobs</p>
-                            <p className="text-3xl font-bold text-blue-900 mt-1">{todayBookings.length}</p>
+                            <p className="text-sm text-blue-400 font-medium">Today's Jobs</p>
+                            <p className="text-3xl font-bold text-gray-50 mt-1">{todayBookings.length}</p>
                         </div>
-                        <Calendar className="h-8 w-8 text-blue-500" />
+                        <Calendar className="h-8 w-8 text-blue-400" />
                     </div>
                 </div>
-                <div className="card bg-red-50 border-red-100">
+                <div className="card bg-gray-800 border-gray-700">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm text-red-600 font-medium">Critical Alerts</p>
-                            <p className="text-3xl font-bold text-red-900 mt-1">{highSeverityAlerts.length}</p>
+                            <p className="text-sm text-red-400 font-medium">Critical Alerts</p>
+                            <p className="text-3xl font-bold text-gray-50 mt-1">{highSeverityAlerts.length}</p>
                         </div>
-                        <AlertOctagon className="h-8 w-8 text-red-500" />
+                        <AlertOctagon className="h-8 w-8 text-red-400" />
                     </div>
                 </div>
-                <div className="card bg-green-50 border-green-100">
+                <div className="card bg-gray-800 border-gray-700">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm text-green-600 font-medium">Completed</p>
-                            <p className="text-3xl font-bold text-green-900 mt-1">
+                            <p className="text-sm text-green-400 font-medium">Completed</p>
+                            <p className="text-3xl font-bold text-gray-50 mt-1">
                                 {bookings.filter(b => b.status === "COMPLETED").length}
                             </p>
                         </div>
-                        <CheckSquare className="h-8 w-8 text-green-500" />
+                        <CheckSquare className="h-8 w-8 text-green-400" />
                     </div>
                 </div>
-                <div className="card bg-purple-50 border-purple-100">
+                <div className="card bg-gray-800 border-gray-700">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm text-purple-600 font-medium">Pending Invoices</p>
-                            <p className="text-3xl font-bold text-purple-900 mt-1">--</p>
+                            <p className="text-sm text-purple-400 font-medium">Pending Invoices</p>
+                            <p className="text-3xl font-bold text-gray-50 mt-1">--</p>
                         </div>
-                        <FileText className="h-8 w-8 text-purple-500" />
+                        <FileText className="h-8 w-8 text-purple-400" />
                     </div>
                 </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Today's Schedule */}
-                <div className="lg:col-span-2 card">
-                    <h2 className="text-lg font-bold text-gray-900 mb-4">Today's Schedule</h2>
+                <div className="lg:col-span-2 card bg-gray-800 border-gray-700">
+                    <h2 className="text-lg font-bold text-gray-50 mb-4">Today's Schedule</h2>
                     <div className="overflow-x-auto">
                         <table className="min-w-full text-left text-sm">
-                            <thead className="bg-gray-50 text-gray-600 uppercase">
+                            <thead className="bg-gray-900 text-gray-300 uppercase border-b border-gray-700">
                                 <tr>
                                     <th className="px-4 py-3">Time</th>
                                     <th className="px-4 py-3">Vehicle</th>
@@ -114,29 +114,29 @@ const ServiceDashboard = ({ serviceCentreId }: ServiceDashboardProps) => {
                                     <th className="px-4 py-3">Action</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-100">
+                            <tbody className="divide-y divide-gray-700">
                                 {todayBookings.map((booking) => (
-                                    <tr key={booking.booking_id} className="hover:bg-gray-50">
+                                    <tr key={booking.booking_id} className="hover:bg-gray-800">
                                         <td className="px-4 py-3 font-medium">
                                             {new Date(booking.slot_start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                         </td>
-                                        <td className="px-4 py-3 text-gray-600">{booking.vehicle_id}</td>
-                                        <td className="px-4 py-3 text-gray-600">{booking.user_id}</td>
+                                        <td className="px-4 py-3 text-gray-300">{booking.vehicle_id}</td>
+                                        <td className="px-4 py-3 text-gray-300">{booking.user_id}</td>
                                         <td className="px-4 py-3">
-                                            <span className={`px-2 py-1 rounded-full text-xs font-semibold ${booking.status === 'CONFIRMED' ? 'bg-blue-100 text-blue-800' :
-                                                booking.status === 'COMPLETED' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                                            <span className={`px-2 py-1 rounded-full text-xs font-semibold ${booking.status === 'CONFIRMED' ? 'bg-blue-600/30 text-blue-300' :
+                                                booking.status === 'COMPLETED' ? 'bg-green-600/30 text-green-300' : 'bg-gray-700 text-gray-200'
                                                 }`}>
                                                 {booking.status}
                                             </span>
                                         </td>
                                         <td className="px-4 py-3">
-                                            <button className="text-primary-600 hover:text-primary-800 font-medium text-xs">open job card</button>
+                                            <button className="text-blue-400 hover:text-blue-300 font-medium text-xs">open job card</button>
                                         </td>
                                     </tr>
                                 ))}
                                 {todayBookings.length === 0 && (
                                     <tr>
-                                        <td colSpan={5} className="px-4 py-8 text-center text-gray-400">No bookings for today</td>
+                                        <td colSpan={5} className="px-4 py-8 text-center text-gray-300">No bookings for today</td>
                                     </tr>
                                 )}
                             </tbody>
@@ -145,19 +145,19 @@ const ServiceDashboard = ({ serviceCentreId }: ServiceDashboardProps) => {
                 </div>
 
                 {/* High Priority Alerts */}
-                <div className="card">
-                    <h2 className="text-lg font-bold text-gray-900 mb-4">Incoming Alerts (High Priority)</h2>
+                <div className="card bg-gray-800 border-gray-700">
+                    <h2 className="text-lg font-bold text-gray-50 mb-4">Incoming Alerts (High Priority)</h2>
                     <div className="space-y-4">
                         {highSeverityAlerts.map((alert, idx) => (
-                            <div key={idx} className="p-3 bg-red-50 border border-red-100 rounded-lg">
+                            <div key={idx} className="p-3 bg-red-900/20 border border-red-700 rounded-lg">
                                 <div className="flex items-start">
-                                    <AlertOctagon className="h-5 w-5 text-red-600 mt-0.5" />
+                                    <AlertOctagon className="h-5 w-5 text-red-400 mt-0.5" />
                                     <div className="ml-3">
-                                        <p className="text-sm font-bold text-gray-900">{alert.alert_type}</p>
-                                        <p className="text-xs text-gray-600 mt-1">Vehicle: {alert.vehicle_id}</p>
-                                        <p className="text-xs text-gray-500 mt-1">{new Date(alert.timestamp).toLocaleString()}</p>
+                                        <p className="text-sm font-bold text-gray-50">{alert.alert_type}</p>
+                                        <p className="text-xs text-gray-300 mt-1">Vehicle: {alert.vehicle_id}</p>
+                                        <p className="text-xs text-gray-400 mt-1">{new Date(alert.timestamp).toLocaleString()}</p>
                                         <div className="mt-2">
-                                            <button className="text-xs bg-white border border-red-200 text-red-700 px-2 py-1 rounded hover:bg-red-100">
+                                            <button className="text-xs bg-red-600/20 border border-red-600 text-red-400 px-2 py-1 rounded hover:bg-red-600/30">
                                                 Contact Owner
                                             </button>
                                         </div>
@@ -165,7 +165,7 @@ const ServiceDashboard = ({ serviceCentreId }: ServiceDashboardProps) => {
                                 </div>
                             </div>
                         ))}
-                        {!highSeverityAlerts.length && <p className="text-gray-400 text-center py-4">No high severity alerts</p>}
+                        {!highSeverityAlerts.length && <p className="text-gray-300 text-center py-4">No high severity alerts</p>}
                     </div>
                 </div>
             </div>
@@ -174,3 +174,6 @@ const ServiceDashboard = ({ serviceCentreId }: ServiceDashboardProps) => {
 };
 
 export default ServiceDashboard;
+
+
+

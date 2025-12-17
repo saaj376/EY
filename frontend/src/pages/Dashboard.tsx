@@ -249,22 +249,13 @@ const Dashboard = ({ role, userId, serviceCentreId }: DashboardProps) => {
             </div>
             <Wrench className="h-5 w-5 text-gray-300" />
           </Link>
-          <Link
-            to="/analytics"
-            className="card flex items-center justify-between hover:bg-gray-900 transition-colors"
-          >
-            <div>
-              <p className="text-sm font-semibold text-gray-100">Report Generator</p>
-              <p className="text-xs text-gray-500">Custom analytics & logs.</p>
-            </div>
-            <TrendingUp className="h-5 w-5 text-gray-300" />
-          </Link>
-        </div>
+</div>
       </div>
     </div>
   );
 };
 
 export default Dashboard;
+
 
 

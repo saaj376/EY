@@ -125,7 +125,8 @@ const ServiceBooking = ({ role, userId, serviceCentreId }: ServiceBookingProps) 
         setLoadingSlots(true);
         try {
           const response = await serviceApi.getServiceCentreSlots(targetCentreId, selectedDate, role);
-          setAvailableSlots(response.data.slots);
+          const slots = Array.isArray(response.data) ? response.data : (response.data && response.data.slots ? response.data.slots : []);
+          setAvailableSlots(slots);
         } catch (error) {
           console.error('Error fetching slots:', error);
         } finally {
@@ -440,11 +441,11 @@ const ServiceBooking = ({ role, userId, serviceCentreId }: ServiceBookingProps) 
                     <label className="block text-sm font-medium text-gray-300 mb-2">Available Time Slots</label>
                     {loadingSlots ? (
                       <div className="text-center py-4 text-gray-500">Loading slots...</div>
-                    ) : availableSlots.length === 0 ? (
+                    ) : ((availableSlots?.length ?? 0) === 0) ? (
                       <div className="text-center py-4 text-gray-500">No slots available for this date.</div>
                     ) : (
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                        {availableSlots.map((slot, idx) => {
+                        {(availableSlots || []).map((slot, idx) => {
                           const isSelected = newBooking.slot_start === slot.start;
                           const isAvailable = slot.is_available;
 
@@ -873,3 +874,5 @@ const ServiceBooking = ({ role, userId, serviceCentreId }: ServiceBookingProps) 
 };
 
 export default ServiceBooking;
+
+

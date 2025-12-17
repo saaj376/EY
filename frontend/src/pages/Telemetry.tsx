@@ -147,16 +147,16 @@ export default function TelemetryPage({ role, userId }: Props) {
         <>
           {/* Live Metrics */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <Metric title="Speed" value={`${current.speed_kmph}`} unit="km/h" icon={<Gauge />} />
-            <Metric title="RPM" value={`${current.rpm}`} unit="rpm" icon={<Activity />} />
+            <Metric title="Speed" value={`${(current.speed_kmph || 0).toFixed(2)}`} unit="km/h" icon={<Gauge />} />
+            <Metric title="RPM" value={`${(current.rpm || 0).toFixed(2)}`} unit="rpm" icon={<Activity />} />
             <Metric
               title="Engine Temp"
-              value={`${current.engine_temp_c}`}
+              value={`${(current.engine_temp_c || 0).toFixed(2)}`}
               unit="°C"
               icon={<Thermometer />}
               danger={current.engine_temp_c > 95}
             />
-            <Metric title="Fuel" value={`${current.fuel_level_percent}`} unit="%" icon={<Fuel />} />
+            <Metric title="Fuel" value={`${(current.fuel_level_percent || 0).toFixed(2)}`} unit="%" icon={<Fuel />} />
           </div>
 
           {/* Location */}
@@ -214,9 +214,9 @@ function Metric({ title, value, unit, icon, danger }: any) {
         <span className="text-sm text-gray-400">{title}</span>
         {icon}
       </div>
-      <div className={`text-3xl font-semibold tabular-nums text-gray-50 ${danger ? "text-red-400" : ""}`} style={{ fontFamily: '"Space Mono", monospace' }}>
+      <div className={`text-2xl font-semibold tabular-nums text-gray-50 break-words whitespace-normal ${danger ? "text-red-400" : ""}`} style={{ fontFamily: '"Space Mono", monospace' }}>
         {value}
-        <span className="text-sm ml-1 text-gray-400">{unit}</span>
+        <span className="text-sm ml-0 text-gray-400">{unit}</span>
       </div>
     </div>
   );
@@ -238,3 +238,4 @@ function SimpleChart({ title, dataKey, color, data }: any) {
     </div>
   );
 }
+

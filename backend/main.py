@@ -1,4 +1,4 @@
-﻿from fastapi import FastAPI
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 # Phase 1
@@ -25,9 +25,9 @@ from middleware import ueba_middleware
 import analytics
 
 app = FastAPI(
-    title="Vehicle Intelligence Platform",
+    title="Autosphere",
     version="1.0",
-    description="Telemetry â†’ ML â†’ Alerts â†’ RCA â†’ CAPA â†’ Service Closure"
+    description="Intelligent Vehicle Management Platform"
 )
 
 
@@ -220,4 +220,5 @@ def start_background_services():
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
+
 

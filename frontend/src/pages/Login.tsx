@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Car, LogIn, User, Building2, Shield, BarChart3 } from 'lucide-react';
+import { Car, LogIn, User, Building2, Shield } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { UserRole } from '../types';
 
@@ -32,13 +32,7 @@ const Login = () => {
       description: 'Full platform access including RCA and analytics',
       placeholder: 'Enter your User ID',
     },
-    [UserRole.OEM_ANALYST]: {
-      label: 'OEM Analyst',
-      icon: BarChart3,
-      description: 'Access analytics, telemetry, and RCA management',
-      placeholder: 'Enter your User ID',
-    },
-  };
+    };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,27 +66,27 @@ const Login = () => {
   const currentRoleInfo = roleInfo[selectedRole];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-primary-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 flex items-center justify-center p-4">
       <div className="max-w-md w-full">
         {/* Logo and Title */}
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
-            <div className="p-4 bg-primary-600 rounded-2xl shadow-lg">
+            <div className="p-4 bg-primary-600 rounded-2xl shadow-xl">
               <Car className="h-12 w-12 text-white" />
             </div>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Vehicle Intelligence Platform
+          <h1 className="text-3xl font-bold text-gray-50 mb-2">
+            Autosphere
           </h1>
-          <p className="text-gray-600">Sign in to access your account</p>
+          <p className="text-gray-300">Sign in to access your account</p>
         </div>
 
         {/* Login Card */}
-        <div className="bg-white rounded-2xl shadow-xl p-8">
+        <div className="bg-gray-800 rounded-2xl shadow-2xl p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Role Selection */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">
+              <label className="block text-sm font-medium text-gray-200 mb-3">
                 Select Your Role
               </label>
               <div className="grid grid-cols-2 gap-3">
@@ -108,13 +102,13 @@ const Login = () => {
                         setError('');
                       }}
                       className={`p-4 rounded-lg border-2 transition-all ${isSelected
-                        ? 'border-primary-600 bg-primary-50 shadow-md'
-                        : 'border-gray-200 hover:border-gray-300 bg-white'
+                        ? 'border-primary-600 bg-primary-50 shadow-lg'
+                        : 'border-gray-700 hover:border-gray-300 bg-gray-800'
                         }`}
                     >
                       <Icon className={`h-6 w-6 mx-auto mb-2 ${isSelected ? 'text-primary-600' : 'text-gray-400'
                         }`} />
-                      <p className={`text-sm font-medium ${isSelected ? 'text-primary-700' : 'text-gray-700'
+                      <p className={`text-sm font-medium ${isSelected ? 'text-primary-700' : 'text-gray-200'
                         }`}>
                         {info.label}
                       </p>
@@ -122,7 +116,7 @@ const Login = () => {
                   );
                 })}
               </div>
-              <p className="text-xs text-gray-500 mt-2 text-center">
+              <p className="text-xs text-gray-400 mt-2 text-center">
                 {currentRoleInfo.description}
               </p>
             </div>
@@ -130,7 +124,7 @@ const Login = () => {
             {/* User ID Input (Hidden for Service Center) */}
             {selectedRole !== UserRole.SERVICE_CENTER && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-200 mb-2">
                   User ID
                 </label>
                 <div className="relative">
@@ -153,7 +147,7 @@ const Login = () => {
             {/* Service Centre ID (only for Service Center role) */}
             {selectedRole === UserRole.SERVICE_CENTER && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-200 mb-2">
                   Service Centre ID
                 </label>
                 <div className="relative">
@@ -191,8 +185,8 @@ const Login = () => {
           </form>
 
           {/* Demo Credentials Hint */}
-          <div className="mt-6 pt-6 border-t border-gray-200">
-            <p className="text-xs text-gray-500 text-center">
+          <div className="mt-6 pt-6 border-t border-gray-700">
+            <p className="text-xs text-gray-400 text-center">
               <strong>Demo Mode:</strong> Enter any User ID to continue.
               For Service Center, also enter a Service Centre ID.
             </p>
@@ -200,8 +194,8 @@ const Login = () => {
         </div>
 
         {/* Footer */}
-        <p className="text-center text-sm text-gray-500 mt-6">
-          © 2024 Vehicle Intelligence Platform. All rights reserved.
+        <p className="text-center text-sm text-gray-400 mt-6">
+          © 2024 Autosphere. All rights reserved.
         </p>
       </div>
     </div>
@@ -209,5 +203,6 @@ const Login = () => {
 };
 
 export default Login;
+
 
 
