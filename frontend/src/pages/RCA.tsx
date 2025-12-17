@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { FileText, Plus } from 'lucide-react';
 import { UserRole } from '../types';
 import { rcaApi } from '../services/api';
 import { format } from 'date-fns';
+import { getMockRCAs } from '../lib/mockData';
 
 interface RCAProps {
   role: UserRole;
@@ -16,7 +17,18 @@ const RCA = ({ role }: RCAProps) => {
     root_cause: '',
     analysis_method: '5_WHYS',
   });
-  const [rcas, _setRcas] = useState<any[]>([]); // Would fetch from API
+  const [rcas, setRcas] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Add OEM mock data support
+  useEffect(() => {
+    if (role === UserRole.OEM_ADMIN || role === UserRole.OEM_ANALYST) {
+      setRcas(getMockRCAs(role));
+      setLoading(false);
+    } else {
+      setLoading(false);
+    }
+  }, [role]);
 
   const handleCreateRCA = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,11 +45,20 @@ const RCA = ({ role }: RCAProps) => {
         root_cause: '',
         analysis_method: '5_WHYS',
       });
+      // Update RCA list optimistically
+      setRcas((prev) => [
+        ...prev,
+        { ...newRCA, rca_id: response.data.rca_id, status: 'OPEN', created_at: new Date() },
+      ]);
     } catch (error) {
       console.error('Error creating RCA:', error);
       alert('Failed to create RCA');
     }
   };
+
+  if (loading) {
+    return <div className="text-center py-12 text-gray-400">Loading RCA data...</div>;
+  }
 
   return (
     <div className="space-y-8">
@@ -143,12 +164,12 @@ const RCA = ({ role }: RCAProps) => {
         ) : (
           <div className="space-y-4">
             {rcas.map((rca) => (
-              <div key={rca.rca_id} className="p-4 bg-gray-900/80 rounded-lg">
+              <div key={rca._id} className="p-4 bg-gray-900/80 rounded-lg">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center space-x-3 mb-2">
                       <FileText className="h-5 w-5 text-blue-400" />
-                      <h3 className="font-semibold text-gray-50">RCA #{rca.rca_id.slice(-8)}</h3>
+                      <h3 className="font-semibold text-gray-50">RCA #{rca._id}</h3>
                       <span className={`badge border ${rca.status === 'CLOSED' ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20' : 'bg-amber-500/10 text-amber-300 border-amber-500/20'
                         }`}>
                         {rca.status}

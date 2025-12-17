@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Car, MapPin, Calendar, ArrowRight } from 'lucide-react';
 import { UserRole } from '../types';
 import { userApi } from '../services/api';
+import { getMockVehicles } from '../lib/mockData';
 import type { Vehicle } from '../types';
 import { format } from 'date-fns';
 
@@ -18,6 +19,13 @@ const Vehicles = ({ role, userId }: VehiclesProps) => {
   useEffect(() => {
     const fetchVehicles = async () => {
       try {
+        // Add OEM mock data support
+        if (role === UserRole.OEM_ADMIN || role === UserRole.OEM_ANALYST) {
+          setVehicles(getMockVehicles(role));
+          setLoading(false);
+          return;
+        }
+        
         const response = await userApi.getVehicles(userId, role);
         setVehicles(response.data);
       } catch (error) {
@@ -27,7 +35,7 @@ const Vehicles = ({ role, userId }: VehiclesProps) => {
       }
     };
 
-    if (role === UserRole.CUSTOMER) {
+    if (role === UserRole.CUSTOMER || role === UserRole.OEM_ADMIN || role === UserRole.OEM_ANALYST) {
       fetchVehicles();
     }
   }, [role, userId]);
@@ -36,11 +44,19 @@ const Vehicles = ({ role, userId }: VehiclesProps) => {
     return <div className="text-center py-12 text-gray-400">Loading vehicles...</div>;
   }
 
+  // Update the page title for OEM users
+  const pageTitle = (role === UserRole.OEM_ADMIN || role === UserRole.OEM_ANALYST) 
+    ? "Fleet Management" 
+    : "My Vehicles";
+  const pageSubtitle = (role === UserRole.OEM_ADMIN || role === UserRole.OEM_ANALYST)
+    ? "Monitor your entire vehicle fleet"
+    : "Manage your registered vehicles";
+
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-semibold text-gray-50">My Vehicles</h1>
-        <p className="mt-1 text-sm text-gray-400">Manage your registered vehicles</p>
+        <h1 className="text-3xl font-semibold text-gray-50">{pageTitle}</h1>
+        <p className="mt-1 text-sm text-gray-400">{pageSubtitle}</p>
       </div>
 
       {vehicles.length === 0 ? (

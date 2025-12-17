@@ -4,6 +4,7 @@ import { UserRole } from '../types';
 import { userApi, serviceApi } from '../services/api';
 import type { Alert, Diagnosis } from '../types';
 import { format } from 'date-fns';
+import { getMockAlerts } from '../lib/mockData';
 
 interface AlertsProps {
   role: UserRole;
@@ -23,11 +24,19 @@ const Alerts = ({ role, userId, serviceCentreId }: AlertsProps) => {
       try {
         let alertsData: Alert[] = [];
         let diagnosisData: Diagnosis[] = [];
+        
+        // Add OEM mock data support
+        if (role === UserRole.OEM_ADMIN || role === UserRole.OEM_ANALYST) {
+          alertsData = getMockAlerts(role);
+          setAlerts(alertsData);
+          setLoading(false);
+          return;
+        }
+        
         if (role === UserRole.CUSTOMER) {
           const res = await userApi.getAlerts(userId, role);
           alertsData = res.data;
           try {
-            // Also fetch diagnosis to have them ready
             const dRes = await userApi.getDiagnosis(userId, role);
             diagnosisData = dRes.data;
           } catch (e) { console.error("No diagnosis", e); }
@@ -86,12 +95,19 @@ const Alerts = ({ role, userId, serviceCentreId }: AlertsProps) => {
 
   if (loading) return <div className="text-center py-12">Loading alerts...</div>;
 
+  const pageTitle = (role === UserRole.OEM_ADMIN || role === UserRole.OEM_ANALYST)
+  ? "Fleet Alerts"
+  : "Alerts";
+  const pageSubtitle = (role === UserRole.OEM_ADMIN || role === UserRole.OEM_ANALYST)
+  ? "Monitor and manage fleet-wide alerts"
+  : "Monitor and manage vehicle alerts";
+
   return (
     <div className="space-y-6 relative">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Alerts</h1>
-          <p className="text-gray-600 mt-1">Monitor and manage vehicle alerts</p>
+          <h1 className="text-3xl font-bold text-gray-900">{pageTitle}</h1>
+          <p className="text-gray-600 mt-1">{pageSubtitle}</p>
         </div>
       </div>
 

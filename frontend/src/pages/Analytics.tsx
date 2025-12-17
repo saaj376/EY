@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { TrendingUp, AlertTriangle, Clock, CheckCircle, XCircle } from 'lucide-react';
 import { UserRole } from '../types';
 import { analyticsApi } from '../services/api';
+import { getMockAnalytics } from '../lib/mockData';
 import type { Analytics as AnalyticsType } from '../types';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
@@ -18,6 +19,13 @@ const Analytics = ({ role }: AnalyticsProps) => {
   useEffect(() => {
     const fetchAnalytics = async () => {
       try {
+        // Add OEM mock data support
+        if (role === UserRole.OEM_ADMIN || role === UserRole.OEM_ANALYST) {
+          setAnalytics(getMockAnalytics(role));
+          setLoading(false);
+          return;
+        }
+        
         const response = await analyticsApi.getAnalytics(role);
         setAnalytics(response.data);
       } catch (error) {
@@ -236,4 +244,3 @@ const Analytics = ({ role }: AnalyticsProps) => {
 };
 
 export default Analytics;
-

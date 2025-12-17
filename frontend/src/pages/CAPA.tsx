@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { ClipboardCheck, Calendar, AlertCircle, Plus } from 'lucide-react';
 import { UserRole } from '../types';
 import { capaApi, serviceApi } from '../services/api';
+import { getMockCAPAs } from '../lib/mockData';
 import type { CAPA } from '../types';
 import { format } from 'date-fns';
 
@@ -24,6 +25,13 @@ const CAPA = ({ role }: CAPAProps) => {
 
   useEffect(() => {
     const fetchCAPA = async () => {
+      // Add OEM mock data support
+      if (role === UserRole.OEM_ADMIN || role === UserRole.OEM_ANALYST) {
+        setCapas(getMockCAPAs(role));
+        setLoading(false);
+        return;
+      }
+      
       if (role === UserRole.SERVICE_CENTER) {
         try {
           const response = await serviceApi.getCAPA(role);
@@ -192,7 +200,7 @@ const CAPA = ({ role }: CAPAProps) => {
                     <div className="flex-1">
                       <div className="flex items-center space-x-3 mb-2">
                         <ClipboardCheck className="h-5 w-5 text-blue-400" />
-                        <h3 className="font-semibold text-gray-50">CAPA #{capa.capa_id.slice(-8)}</h3>
+                        <h3 className="font-semibold text-gray-50">CAPA #{capa.capa_id}</h3>
                         <span className={`badge border ${capa.status === 'COMPLETED' ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20' :
                             overdue ? 'bg-red-500/10 text-red-300 border-red-500/20' :
                               'bg-amber-500/10 text-amber-300 border-amber-500/20'
@@ -232,4 +240,5 @@ const CAPA = ({ role }: CAPAProps) => {
 };
 
 export default CAPA;
+
 

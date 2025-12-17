@@ -21,6 +21,7 @@ import { format } from "date-fns";
 
 import { UserRole } from "../types";
 import { telemetryApi, userApi } from "../services/api";
+import { getMockTelemetry, getMockVehicles } from '../lib/mockData';
 import type { Telemetry, Vehicle } from "../types";
 
 const MAX_POINTS = 30;
@@ -43,6 +44,16 @@ export default function TelemetryPage({ role, userId }: Props) {
 
   // -------------------- Vehicles --------------------
   useEffect(() => {
+    // Add OEM mock data support
+    if (role === UserRole.OEM_ADMIN || role === UserRole.OEM_ANALYST) {
+      const mockVehicles = getMockVehicles(role);
+      setVehicles(mockVehicles);
+      if (!selectedVehicle && mockVehicles.length > 0) {
+        setSelectedVehicle(mockVehicles[0].vin);
+      }
+      return;
+    }
+    
     if (role !== UserRole.CUSTOMER) return;
 
     userApi.getVehicles(userId, role).then((res) => {
@@ -60,6 +71,17 @@ export default function TelemetryPage({ role, userId }: Props) {
     const fetchTelemetry = async () => {
       setLoading(true);
       try {
+        // Add OEM mock data support
+        if (role === UserRole.OEM_ADMIN || role === UserRole.OEM_ANALYST) {
+          const mockData = getMockTelemetry(role);
+          if (mockData.length > 0) {
+            setLiveTelemetry(mockData[mockData.length - 1]);
+            setHistory(mockData);
+          }
+          setLoading(false);
+          return;
+        }
+        
         const [liveRes, historyRes] = await Promise.all([
           telemetryApi.getLive(selectedVehicle, role).catch(() => null),
           telemetryApi.getHistory(selectedVehicle, MAX_POINTS, role),
@@ -102,7 +124,7 @@ export default function TelemetryPage({ role, userId }: Props) {
           <p className="mt-1 text-sm text-gray-400">Real-time vehicle monitoring</p>
         </div>
 
-        {role === UserRole.CUSTOMER && vehicles.length > 0 && (
+        {(role === UserRole.CUSTOMER || role === UserRole.OEM_ADMIN || role === UserRole.OEM_ANALYST) && vehicles.length > 0 && (
           <select
             className="border border-gray-700 rounded-lg px-4 py-2 bg-gray-900 text-gray-100"
             value={selectedVehicle}

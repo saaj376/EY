@@ -13,6 +13,7 @@ import { UserRole } from '../types';
 import type { Vehicle, Alert, Booking } from '../types';
 import { userApi, serviceApi } from '../services/api';
 import ServiceDashboard from '../components/dashboard/ServiceDashboard';
+import { getMockVehicles, getMockAlerts } from '../lib/mockData';
 
 interface DashboardProps {
   role: UserRole;
@@ -29,6 +30,14 @@ const Dashboard = ({ role, userId, serviceCentreId }: DashboardProps) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        // Add OEM mock data support
+        if (role === UserRole.OEM_ADMIN || role === UserRole.OEM_ANALYST) {
+          setVehicles(getMockVehicles(role));
+          setAlerts(getMockAlerts(role));
+          setLoading(false);
+          return;
+        }
+        
         if (role === UserRole.CUSTOMER) {
           const [vehiclesRes, alertsRes, bookingsRes] = await Promise.all([
             userApi.getVehicles(userId, role),
